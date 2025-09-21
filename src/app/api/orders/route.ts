@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { sendOrderNotificationEmail, sendOrderNotificationToAdmin } from '@/lib/email'
+import { sendOrderStatusEmail, sendOrderNotificationToAdmin } from '@/lib/email'
 import { createApiRateLimit, createStrictRateLimit } from '@/lib/rate-limit'
 import { withRateLimit } from '@/lib/api-helpers'
 
@@ -104,24 +104,37 @@ export async function POST(request: NextRequest) {
     // Send email notifications
     const customerName = `${shippingAddress.firstName} ${shippingAddress.lastName}`
     
-    // Send to user
-    if (shippingAddress.email) {
-      await sendOrderNotificationEmail(
-        shippingAddress.email,
-        orderNumber,
-        'PENDING',
-        customerName
-      )
+    // Send beautiful email to customer using new template
+    if (session.user.email) {
+      try {
+        await sendOrderStatusEmail({
+          userEmail: session.user.email,
+          userName: customerName,
+          orderNumber: orderNumber,
+          status: 'PENDING',
+          orderTotal: Number(order.total)
+        })
+        console.log(`✅ Order creation email sent to ${session.user.email} for order ${orderNumber}`)
+      } catch (emailError) {
+        console.error('❌ Failed to send order creation email:', emailError)
+        // Don't fail the request if email fails
+      }
     }
     
     // Send to admin
-    await sendOrderNotificationToAdmin(
-      orderNumber,
-      'PENDING',
-      customerName,
-      shippingAddress.email || 'No email provided',
-      Number(order.total)
-    )
+    try {
+      await sendOrderNotificationToAdmin(
+        orderNumber,
+        'PENDING',
+        customerName,
+        session.user.email || 'No email provided',
+        Number(order.total)
+      )
+      console.log(`✅ Admin notification sent for order ${orderNumber}`)
+    } catch (adminEmailError) {
+      console.error('❌ Failed to send admin notification:', adminEmailError)
+      // Don't fail the request if admin email fails
+    }
 
     return NextResponse.json({
       success: true,

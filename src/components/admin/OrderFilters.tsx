@@ -18,21 +18,43 @@ export function OrderFilters({ filters }: OrderFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isOpen, setIsOpen] = useState(false)
+  const [localFilters, setLocalFilters] = useState(filters)
 
+  // Update local filters when props change
+  useEffect(() => {
+    setLocalFilters(filters)
+  }, [filters])
 
-  const updateFilter = (key: string, value: string | undefined) => {
-    const params = new URLSearchParams(searchParams.toString())
-    
-    if (value && value !== '') {
-      params.set(key, value)
-    } else {
-      params.delete(key)
-    }
-    
-    // Reset to page 1 when filters change
-    params.delete('page')
-    
-    router.push(`/admin/orders?${params.toString()}`)
+  // Debounced URL update
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams()
+      
+      if (localFilters.page) params.set('page', localFilters.page.toString())
+      if (localFilters.limit) params.set('limit', localFilters.limit.toString())
+      if (localFilters.status) params.set('status', localFilters.status)
+      if (localFilters.paymentMethod) params.set('paymentMethod', localFilters.paymentMethod)
+      if (localFilters.search) params.set('search', localFilters.search)
+      if (localFilters.sortBy) params.set('sortBy', localFilters.sortBy)
+      if (localFilters.sortOrder) params.set('sortOrder', localFilters.sortOrder)
+      if (localFilters.dateFrom) params.set('dateFrom', localFilters.dateFrom.toISOString())
+      if (localFilters.dateTo) params.set('dateTo', localFilters.dateTo.toISOString())
+
+      const newUrl = `/admin/orders?${params.toString()}`
+      if (window.location.pathname + window.location.search !== newUrl) {
+        router.push(newUrl)
+      }
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(timer)
+  }, [localFilters, router])
+
+  const updateFilter = (key: keyof AdminOrderFilters, value: any) => {
+    setLocalFilters(prev => ({
+      ...prev,
+      [key]: value,
+      page: 1 // Reset to page 1 when filters change
+    }))
   }
 
   const clearFilters = () => {
@@ -41,11 +63,11 @@ export function OrderFilters({ filters }: OrderFiltersProps) {
 
   const getActiveFilterCount = () => {
     let count = 0
-    if (filters.status) count++
-    if (filters.paymentMethod) count++
-    if (filters.dateFrom) count++
-    if (filters.dateTo) count++
-    if (filters.search) count++
+    if (localFilters.status) count++
+    if (localFilters.paymentMethod) count++
+    if (localFilters.dateFrom) count++
+    if (localFilters.dateTo) count++
+    if (localFilters.search) count++
     return count
   }
 
@@ -62,14 +84,14 @@ export function OrderFilters({ filters }: OrderFiltersProps) {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search orders..."
-                value={filters.search || ''}
+                value={localFilters.search || ''}
                 onChange={(e) => updateFilter('search', e.target.value)}
                 className="pl-10"
               />
             </div>
 
             {/* Status */}
-            <Select value={filters.status || undefined} onValueChange={(value) => updateFilter('status', value)}>
+            <Select value={localFilters.status || undefined} onValueChange={(value) => updateFilter('status', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -85,7 +107,7 @@ export function OrderFilters({ filters }: OrderFiltersProps) {
             </Select>
 
             {/* Payment Method */}
-            <Select value={filters.paymentMethod || undefined} onValueChange={(value) => updateFilter('paymentMethod', value)}>
+            <Select value={localFilters.paymentMethod || undefined} onValueChange={(value) => updateFilter('paymentMethod', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Payment" />
               </SelectTrigger>
@@ -101,8 +123,8 @@ export function OrderFilters({ filters }: OrderFiltersProps) {
               <Input
                 type="date"
                 placeholder="From Date"
-                value={filters.dateFrom ? filters.dateFrom.toISOString().split('T')[0] : ''}
-                onChange={(e) => updateFilter('dateFrom', e.target.value || undefined)}
+                value={localFilters.dateFrom ? localFilters.dateFrom.toISOString().split('T')[0] : ''}
+                onChange={(e) => updateFilter('dateFrom', e.target.value ? new Date(e.target.value) : undefined)}
                 className="pl-10"
               />
             </div>
@@ -113,8 +135,8 @@ export function OrderFilters({ filters }: OrderFiltersProps) {
               <Input
                 type="date"
                 placeholder="To Date"
-                value={filters.dateTo ? filters.dateTo.toISOString().split('T')[0] : ''}
-                onChange={(e) => updateFilter('dateTo', e.target.value || undefined)}
+                value={localFilters.dateTo ? localFilters.dateTo.toISOString().split('T')[0] : ''}
+                onChange={(e) => updateFilter('dateTo', e.target.value ? new Date(e.target.value) : undefined)}
                 className="pl-10"
               />
             </div>
@@ -147,7 +169,7 @@ export function OrderFilters({ filters }: OrderFiltersProps) {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search orders..."
-                  value={filters.search || ''}
+                  value={localFilters.search || ''}
                   onChange={(e) => updateFilter('search', e.target.value)}
                   className="pl-10"
                 />
@@ -156,7 +178,7 @@ export function OrderFilters({ filters }: OrderFiltersProps) {
               {/* Status */}
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
-                <Select value={filters.status || undefined} onValueChange={(value) => updateFilter('status', value)}>
+                <Select value={localFilters.status || undefined} onValueChange={(value) => updateFilter('status', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -175,7 +197,7 @@ export function OrderFilters({ filters }: OrderFiltersProps) {
               {/* Payment Method */}
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Payment Method</label>
-                <Select value={filters.paymentMethod || undefined} onValueChange={(value) => updateFilter('paymentMethod', value)}>
+                <Select value={localFilters.paymentMethod || undefined} onValueChange={(value) => updateFilter('paymentMethod', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
@@ -194,8 +216,8 @@ export function OrderFilters({ filters }: OrderFiltersProps) {
                     <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       type="date"
-                      value={filters.dateFrom ? filters.dateFrom.toISOString().split('T')[0] : ''}
-                      onChange={(e) => updateFilter('dateFrom', e.target.value || undefined)}
+                      value={localFilters.dateFrom ? localFilters.dateFrom.toISOString().split('T')[0] : ''}
+                      onChange={(e) => updateFilter('dateFrom', e.target.value ? new Date(e.target.value) : undefined)}
                       className="pl-10"
                     />
                   </div>
@@ -206,8 +228,8 @@ export function OrderFilters({ filters }: OrderFiltersProps) {
                     <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       type="date"
-                      value={filters.dateTo ? filters.dateTo.toISOString().split('T')[0] : ''}
-                      onChange={(e) => updateFilter('dateTo', e.target.value || undefined)}
+                      value={localFilters.dateTo ? localFilters.dateTo.toISOString().split('T')[0] : ''}
+                      onChange={(e) => updateFilter('dateTo', e.target.value ? new Date(e.target.value) : undefined)}
                       className="pl-10"
                     />
                   </div>

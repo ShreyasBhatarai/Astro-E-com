@@ -16,6 +16,8 @@ interface ProductsPageProps {
     page?: string
     rating?: string
     brand?: string
+    inStock?: string
+    isFeatured?: string
   }
 }
 
@@ -57,7 +59,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     order: (params.order as 'asc' | 'desc') || 'desc',
     page: params.page ? Number(params.page) : 1,
     rating: params.rating ? Number(params.rating) : undefined,
-    brand: params.brand || ''
+    brand: params.brand || '',
+    inStock: params.inStock === 'true' ? true : undefined,
+    isFeatured: params.isFeatured === 'true' ? true : undefined
   }
 
   // Fetch data

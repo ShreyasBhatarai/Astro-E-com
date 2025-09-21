@@ -19,26 +19,35 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     
     // Parse query parameters
+    // Parse query parameters with proper handling of filter values
+    const categoryParam = searchParams.get('category')
+    const brandParam = searchParams.get('brand')
+    const statusParam = searchParams.get('status')
+    const stockStatusParam = searchParams.get('stockStatus')
+    const isFeaturedParam = searchParams.get('isFeatured')
+    
     const filters: AdminProductFilters = {
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1,
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 20,
-      category: searchParams.get('category') || undefined,
-      brand: searchParams.get('brand') || undefined,
+      category: categoryParam && categoryParam !== 'all' ? categoryParam : undefined,
+      brand: brandParam && brandParam !== 'all' ? brandParam : undefined,
       minPrice: searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined,
       maxPrice: searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined,
-      stockStatus: searchParams.get('stockStatus') as 'in_stock' | 'low_stock' | 'out_of_stock' | undefined,
-      status: searchParams.get('status') as 'active' | 'inactive' | undefined,
-      isFeatured: searchParams.get('isFeatured') === 'true' ? true : searchParams.get('isFeatured') === 'false' ? false : undefined,
+      stockStatus: stockStatusParam && stockStatusParam !== 'all' ? stockStatusParam as 'in_stock' | 'low_stock' | 'out_of_stock' : undefined,
+      status: statusParam && statusParam !== 'all' ? statusParam as 'active' | 'inactive' : undefined,
+      isFeatured: isFeaturedParam && isFeaturedParam !== 'all' ? isFeaturedParam === 'true' : undefined,
       search: searchParams.get('search') || undefined,
       sortBy: (searchParams.get('sortBy') as 'name' | 'price' | 'stock' | 'createdAt') || 'createdAt',
       sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
     }
+    
+    console.log('Admin products API filters:', filters)
 
     const result = await getAdminProducts(filters)
 
     return NextResponse.json(result as AdminApiResponse)
   } catch (error) {
-    // console.error('Error fetching admin products:', error)
+    console.error('Error fetching admin products:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch products' } as AdminApiResponse,
       { status: 500 }

@@ -18,7 +18,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, className }: ProductCardProps) {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
   const [isAddingToWishlist, setIsAddingToWishlist] = useState(false)
@@ -33,8 +33,13 @@ export function ProductCard({ product, className }: ProductCardProps) {
     e.preventDefault()
     e.stopPropagation()
     
+    // Check if session is still loading
+    if (status === 'loading') {
+      return
+    }
+    
     // Check if user is authenticated
-    if (!session) {
+    if (status === 'unauthenticated' || !session) {
       toast.info('Please sign in to add items to wishlist', {
         description: 'You will be redirected to the login page',
         action: {

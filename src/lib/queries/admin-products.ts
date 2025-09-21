@@ -146,7 +146,9 @@ export async function getAdminProducts(filters: AdminProductFilters = {}): Promi
       }
     }
   } catch (error) {
-    // console.error('Error fetching admin products:', error)
+    console.error('Error fetching admin products:', error)
+    console.error('Filters used:', filters)
+    console.error('Where clause:', where)
     throw new Error('Failed to fetch products')
   }
 }

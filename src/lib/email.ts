@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer'
 import crypto from 'crypto'
+import { getOTPEmailTemplate, getOrderStatusEmailTemplate } from './email-templates'
 
 // Enhanced email configuration with better error handling
 const createTransporter = () => {
@@ -25,9 +26,9 @@ const transporter = createTransporter()
 const verifyEmailConfig = async () => {
   try {
     await transporter.verify()
-    // console.log('✅ Email server connection verified')
+    console.log('✅ Email server connection verified')
   } catch (error) {
-    // console.error('❌ Email server connection failed:', error)
+    console.error('❌ Email server connection failed:', error)
   }
 }
 
@@ -53,7 +54,7 @@ export async function sendOrderNotificationEmail(
 
     return { success: true }
   } catch (error) {
-    // console.error('Error sending email:', error)
+    console.error('Error sending email:', error)
     return { success: false, error }
   }
 }
@@ -107,7 +108,7 @@ function getEmailContent(status: string, orderNumber: string, customerName: stri
       <div class="container">
         <div class="header">
           <div style="text-align: center; margin-bottom: 20px;">
-            <img src="${process.env.NEXT_PUBLIC_APP_URL}/logo.webp" alt="Astronova Logo" style="height: 80px; width: auto; margin-bottom: 15px; max-width: 100%; display: block; margin-left: auto; margin-right: auto;" onerror="this.style.display='none'" />
+            <img src="/logo.webp" alt="Astronova Logo" style="height: 80px; width: auto; margin-bottom: 15px; max-width: 100%; display: block; margin-left: auto; margin-right: auto;" onerror="this.style.display='none'" />
           </div>
           <h1 style="margin: 0; font-size: 32px; font-weight: 700; text-align: center;"><span style="color: white;">Astronova</span></h1>
           <p style="margin: 10px 0 0 0; font-size: 18px; opacity: 0.95; text-align: center; font-weight: 300;">Premium Quality • Fast Delivery • Trusted Service</p>
@@ -222,78 +223,28 @@ export async function sendOTPEmail(to: string, otp: string, name?: string) {
     if (!process.env.EMAIL_SERVER_HOST || !process.env.EMAIL_SERVER_USER || !process.env.EMAIL_SERVER_PASSWORD) {
       throw new Error('Email configuration is incomplete. Please check environment variables.')
     }
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Verify Your Email</title>
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: white; padding: 30px; border: 1px solid #e5e7eb; }
-          .footer { background: #f9fafb; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; font-size: 14px; color: #6b7280; }
-          .otp-code { font-size: 32px; font-weight: bold; text-align: center; color: #3b82f6; letter-spacing: 8px; margin: 20px 0; }
-          .otp-box { background: #f8fafc; border: 2px dashed #3b82f6; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-        <div class="header">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <img src="${process.env.NEXT_PUBLIC_APP_URL}/logo.webp" alt="Astro Ecom Logo" style="height: 60px; width: auto; margin-bottom: 10px;" />
-          </div>
-          <h1 style="margin: 0; font-size: 28px; font-weight: 600;"><span style="color: white;">Astro</span> <span style="color: #60a5fa;">Ecom</span></h1>
-          <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Email Verification</p>
-        </div>
-          
-          <div class="content">
-            <h2 style="color: #1f2937; margin-top: 0;">Hi ${name || 'there'},</h2>
-            
-            <p>Thank you for registering with Astro Ecom! To complete your registration, please verify your email address using the OTP code below:</p>
-            
-            <div class="otp-box">
-              <p style="margin: 0; font-size: 14px; color: #6b7280;">Your verification code is:</p>
-              <div class="otp-code">${otp}</div>
-              <p style="margin: 0; font-size: 12px; color: #9ca3af;">This code will expire in 10 minutes</p>
-            </div>
-            
-            <p style="color: #6b7280; font-size: 14px;">
-              If you didn't request this verification, you can safely ignore this email.
-            </p>
-          </div>
-          
-          <div class="footer">
-            <p>Thank you for choosing Astro Ecom!</p>
-            <p>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL}" style="color: #3b82f6; text-decoration: none;">Visit Our Store</a>
-            </p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `
+    
+    const htmlContent = getOTPEmailTemplate(otp, name)
 
     const mailOptions = {
-      from: process.env.EMAIL_FROM || 'Astronova <noreply@astronova.com>',
+      from: process.env.EMAIL_FROM || 'AstroNova <noreply@astronova.com>',
       to,
-      subject: 'Verify Your Email - Astronova',
+      subject: 'Verify Your Email - AstroNova',
       html: htmlContent,
     }
 
-    // console.log('📧 Attempting to send OTP email to:', to)
+    console.log('📧 Attempting to send OTP email to:', to)
     const result = await transporter.sendMail(mailOptions)
-    // console.log('✅ OTP email sent successfully:', result.messageId)
+    console.log('✅ OTP email sent successfully:', result.messageId)
 
     return { success: true }
   } catch (error) {
-    // console.error('Error sending OTP email:', error)
+    console.error('Error sending OTP email:', error)
     return { success: false, error }
   }
 }
 
-// Send Order Status Email function
+// Send Order Status Email function  
 export async function sendOrderStatusEmail(data: {
   userEmail: string
   userName: string
@@ -302,90 +253,10 @@ export async function sendOrderStatusEmail(data: {
   orderTotal: number
 }) {
   try {
-    const statusMessages = {
-      'PENDING': 'Your order has been received and is being processed.',
-      'PROCESSING': 'Your order is being prepared for shipment.',
-      'PACKAGED': 'Your order has been packaged and is ready for shipping.',
-      'SHIPPED': 'Your order has been shipped and is on its way to you.',
-      'DELIVERED': 'Your order has been delivered successfully.',
-      'CANCELLED': 'Your order has been cancelled.',
-      'FAILED': 'There was an issue processing your order.'
-    }
-
-    const statusColors = {
-      'PENDING': '#3b82f6',
-      'PROCESSING': '#f59e0b',
-      'PACKAGED': '#8b5cf6',
-      'SHIPPED': '#06b6d4',
-      'DELIVERED': '#10b981',
-      'CANCELLED': '#ef4444',
-      'FAILED': '#6b7280'
-    }
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Order Status Update - Astro Ecom</title>
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #1f2937, #374151); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: white; padding: 30px; border: 1px solid #e5e7eb; }
-          .footer { background: #f9fafb; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; font-size: 14px; color: #6b7280; }
-          .status-badge { display: inline-block; background: ${statusColors[data.status as keyof typeof statusColors] || '#6b7280'}; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; text-transform: uppercase; font-size: 12px; }
-          .order-details { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <img src="${process.env.NEXT_PUBLIC_APP_URL}/logo.webp" alt="Astro Ecom Logo" style="height: 60px; width: auto; margin-bottom: 10px;" />
-            </div>
-            <h1 style="margin: 0; font-size: 28px; font-weight: 600;"><span style="color: white;">Astro</span> <span style="color: #60a5fa;">Ecom</span></h1>
-            <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Order Status Update</p>
-          </div>
-          
-          <div class="content">
-            <h2 style="color: #1f2937; margin-top: 0;">Hi ${data.userName},</h2>
-            
-            <p>Your order status has been updated:</p>
-            
-            <div class="order-details">
-              <div style="text-align: center; margin-bottom: 20px;">
-                <span class="status-badge">${data.status}</span>
-              </div>
-              <p style="text-align: center; margin: 0; font-size: 16px; color: #374151;">
-                ${statusMessages[data.status as keyof typeof statusMessages] || 'Your order status has been updated.'}
-              </p>
-            </div>
-            
-            <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
-              <p style="margin: 0; font-weight: 600;">Order Details:</p>
-              <p style="margin: 5px 0 0 0;">Order Number: <strong>#${data.orderNumber}</strong></p>
-              <p style="margin: 5px 0 0 0;">Total Amount: <strong>Rs. ${data.orderTotal}</strong></p>
-            </div>
-            
-            <p style="color: #6b7280; font-size: 14px;">
-              You can track your order status anytime by visiting our website.
-            </p>
-          </div>
-          
-          <div class="footer">
-            <p>Thank you for choosing Astro Ecom!</p>
-            <p>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL}/orders" style="color: #3b82f6; text-decoration: none;">Track Your Orders</a>
-            </p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `
+    const htmlContent = getOrderStatusEmailTemplate(data)
 
     await transporter.sendMail({
-      from: process.env.EMAIL_FROM || 'Astro Ecom <noreply@astroecom.com>',
+      from: process.env.EMAIL_FROM || 'AstroNova <noreply@astronova.com>',
       to: data.userEmail,
       subject: `Order Status Update - #${data.orderNumber}`,
       html: htmlContent,
@@ -393,7 +264,7 @@ export async function sendOrderStatusEmail(data: {
 
     return { success: true }
   } catch (error) {
-    // console.error('Error sending order status email:', error)
+    console.error('Error sending order status email:', error)
     return { success: false, error }
   }
 }
@@ -420,7 +291,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
         <div class="container">
           <div class="header">
             <div style="text-align: center; margin-bottom: 20px;">
-              <img src="${process.env.NEXT_PUBLIC_APP_URL}/logo.webp" alt="Astro Ecom Logo" style="height: 60px; width: auto; margin-bottom: 10px;" />
+              <img src="/logo.webp" alt="Astro Ecom Logo" style="height: 60px; width: auto; margin-bottom: 10px;" />
             </div>
             <h1 style="margin: 0; font-size: 28px; font-weight: 600;"><span style="color: white;">Astro</span> <span style="color: #60a5fa;">Ecom</span></h1>
             <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Welcome to Our Community!</p>
@@ -471,7 +342,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
 
     return { success: true }
   } catch (error) {
-    // console.error('Error sending welcome email:', error)
+    console.error('Error sending welcome email:', error)
     return { success: false, error }
   }
 }
@@ -488,7 +359,7 @@ export async function sendOrderNotificationToAdmin(
     const adminEmail = process.env.ADMIN_DEFAULT_EMAIL
     
     if (!adminEmail) {
-      // console.warn('Admin email not configured, skipping admin notification')
+      console.warn('Admin email not configured, skipping admin notification')
       return { success: false, error: 'Admin email not configured' }
     }
 
@@ -513,7 +384,7 @@ export async function sendOrderNotificationToAdmin(
         <div class="container">
           <div class="header">
             <div style="text-align: center; margin-bottom: 20px;">
-              <img src="${process.env.NEXT_PUBLIC_APP_URL}/logo.webp" alt="Astronova Logo" style="height: 60px; width: auto; margin-bottom: 10px;" />
+              <img src="/logo.webp" alt="Astronova Logo" style="height: 60px; width: auto; margin-bottom: 10px;" />
             </div>
             <h1 style="margin: 0; font-size: 28px; font-weight: 600;"><span style="color: white;">Astronova</span> <span style="color: #60a5fa;">Admin</span></h1>
             <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">New Order Alert</p>
@@ -579,10 +450,10 @@ export async function sendOrderNotificationToAdmin(
       html: htmlContent,
     })
 
-    // console.log('✅ Admin notification email sent successfully:', result.messageId)
+    console.log('✅ Admin notification email sent successfully:', result.messageId)
     return { success: true }
   } catch (error) {
-    // console.error('❌ Error sending admin notification email:', error)
+    console.error('❌ Error sending admin notification email:', error)
     return { success: false, error }
   }
 }

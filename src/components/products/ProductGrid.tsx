@@ -23,11 +23,11 @@ export function ProductGrid({
   const getGridClasses = () => {
     switch (variant) {
       case 'homepage':
-        return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 lg:gap-6'
+        return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1 lg:gap-2'
       case 'products':
-        return 'grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6'
+        return 'grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 lg:gap-2'
       default:
-        return 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6'
+        return 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1 lg:gap-2'
     }
   }
   if (isLoading && products.length === 0) {

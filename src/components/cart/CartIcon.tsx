@@ -17,12 +17,7 @@ export function CartIcon() {
   const totalItems = getTotalItems()
 
   const handleCartClick = () => {
-    if (!session) {
-      toast.error('Please sign in to view your cart')
-      router.push('/login')
-      return
-    }
-    
+    // Allow guest users to view cart
     router.push('/cart')
   }
 

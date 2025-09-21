@@ -31,6 +31,11 @@ export function WishlistProvider({ children, initialWishlist = [] }: Omit<Wishli
   const [wishlist, setWishlist] = useState<ProductWithDetails[]>(initialWishlist)
   const [wishlistIds, setWishlistIds] = useState<string[]>([])
   const [wishlistCount, setWishlistCount] = useState(0)
+
+  // Update wishlist count whenever wishlistIds changes
+  useEffect(() => {
+    setWishlistCount(wishlistIds.length)
+  }, [wishlistIds])
   const [isLoading, setIsLoading] = useState(false)
   const userId = session?.user?.id
 
@@ -110,6 +115,7 @@ export function WishlistProvider({ children, initialWishlist = [] }: Omit<Wishli
 
         if (response.ok) {
           setWishlistIds(prev => [...prev, productId])
+          setWishlistCount(prev => prev + 1)
           return true
         }
         return false
@@ -118,6 +124,7 @@ export function WishlistProvider({ children, initialWishlist = [] }: Omit<Wishli
         const success = guestWishlist.add(productId)
         if (success) {
           setWishlistIds(prev => [...prev, productId])
+          setWishlistCount(prev => prev + 1)
         }
         return success
       }
@@ -145,6 +152,7 @@ export function WishlistProvider({ children, initialWishlist = [] }: Omit<Wishli
         if (response.ok) {
           setWishlistIds(prev => prev.filter(id => id !== productId))
           setWishlist(prev => prev.filter(item => item.id !== productId))
+          setWishlistCount(prev => Math.max(0, prev - 1))
           return true
         }
         return false
@@ -154,6 +162,7 @@ export function WishlistProvider({ children, initialWishlist = [] }: Omit<Wishli
         if (success) {
           setWishlistIds(prev => prev.filter(id => id !== productId))
           setWishlist(prev => prev.filter(item => item.id !== productId))
+          setWishlistCount(prev => Math.max(0, prev - 1))
         }
         return success
       }

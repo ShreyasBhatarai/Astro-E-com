@@ -123,13 +123,13 @@ export default function OrdersPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="phone" className="text-sm font-medium">
-                Order Number or Phone Number
+                Order Number  
               </label>
               <div className="flex gap-2">
                 <Input
                   id="phone"
                   type="text"
-                  placeholder="Enter your order number (e.g., ORD-123456) or phone number"
+                  placeholder="Enter your order number (e.g., ORD-123456)  "
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="flex-1"
@@ -262,7 +262,7 @@ export default function OrdersPage() {
                 Find Your Orders
               </h3>
               <p className="text-muted-foreground mb-6">
-                Enter your order number or phone number to view your order history and track current orders.
+                Enter your order number   to view your order history and track current orders.
               </p>
             </div>
           </CardContent>

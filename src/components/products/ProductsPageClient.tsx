@@ -44,6 +44,8 @@ export function ProductsPageClient({
       if (filters.page) params.append('page', filters.page.toString())
       if (filters.rating) params.append('rating', filters.rating.toString())
       if (filters.brand) params.append('brand', filters.brand)
+      if (filters.inStock) params.append('inStock', 'true')
+      if (filters.isFeatured) params.append('isFeatured', 'true')
 
       const response = await fetch(`/api/products?${params}`)
       if (!response.ok) throw new Error('Failed to fetch products')
@@ -72,7 +74,9 @@ export function ProductsPageClient({
       order: (searchParams.get('order') as 'asc' | 'desc') || 'desc',
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1,
       rating: searchParams.get('rating') ? parseInt(searchParams.get('rating')!) : undefined,
-      brand: searchParams.get('brand') || ''
+      brand: searchParams.get('brand') || '',
+      inStock: searchParams.get('inStock') === 'true' ? true : undefined,
+      isFeatured: searchParams.get('isFeatured') === 'true' ? true : undefined
     }
     
     setFilters(newFilters)
@@ -81,7 +85,7 @@ export function ProductsPageClient({
   // Fetch products when filters change
   useEffect(() => {
     fetchProducts()
-  }, [filters.category, filters.minPrice, filters.maxPrice, filters.search, filters.sort, filters.order, filters.page, filters.rating, filters.brand])
+  }, [filters.category, filters.minPrice, filters.maxPrice, filters.search, filters.sort, filters.order, filters.page, filters.rating, filters.brand, filters.inStock, filters.isFeatured])
 
   return (
     <>

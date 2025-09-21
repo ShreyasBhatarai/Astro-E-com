@@ -13,10 +13,19 @@ interface EditProductPageProps {
 }
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
-  const product = await getAdminProductById(params.id)
+  const resolvedParams = await params
+  const productData = await getAdminProductById(resolvedParams.id)
 
-  if (!product) {
+  if (!productData) {
     notFound()
+  }
+
+  // Convert Decimal objects to numbers for client component serialization
+  const product = {
+    ...productData,
+    price: Number(productData.price),
+    originalPrice: productData.originalPrice ? Number(productData.originalPrice) : null,
+    weight: productData.weight ? Number(productData.weight) : null
   }
 
   return (

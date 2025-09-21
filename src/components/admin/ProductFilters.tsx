@@ -20,6 +20,39 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
+  const [localFilters, setLocalFilters] = useState(filters)
+
+  // Update local filters when props change
+  useEffect(() => {
+    setLocalFilters(filters)
+  }, [filters])
+
+  // Debounced URL update
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams()
+      
+      if (localFilters.page) params.set('page', localFilters.page.toString())
+      if (localFilters.limit) params.set('limit', localFilters.limit.toString())
+      if (localFilters.category) params.set('category', localFilters.category)
+      if (localFilters.brand) params.set('brand', localFilters.brand)
+      if (localFilters.minPrice) params.set('minPrice', localFilters.minPrice.toString())
+      if (localFilters.maxPrice) params.set('maxPrice', localFilters.maxPrice.toString())
+      if (localFilters.stockStatus) params.set('stockStatus', localFilters.stockStatus)
+      if (localFilters.status) params.set('status', localFilters.status)
+      if (localFilters.isFeatured !== undefined) params.set('isFeatured', localFilters.isFeatured.toString())
+      if (localFilters.search) params.set('search', localFilters.search)
+      if (localFilters.sortBy) params.set('sortBy', localFilters.sortBy)
+      if (localFilters.sortOrder) params.set('sortOrder', localFilters.sortOrder)
+
+      const newUrl = `/admin/products?${params.toString()}`
+      if (window.location.pathname + window.location.search !== newUrl) {
+        router.push(newUrl)
+      }
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(timer)
+  }, [localFilters, router])
 
   // Fetch categories on component mount
   useEffect(() => {
@@ -40,20 +73,12 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
     fetchCategories()
   }, [])
 
-
-  const updateFilter = (key: string, value: string | undefined) => {
-    const params = new URLSearchParams(searchParams.toString())
-    
-    if (value && value !== '') {
-      params.set(key, value)
-    } else {
-      params.delete(key)
-    }
-    
-    // Reset to page 1 when filters change
-    params.delete('page')
-    
-    router.push(`/admin/products?${params.toString()}`)
+  const updateFilter = (key: keyof AdminProductFilters, value: any) => {
+    setLocalFilters(prev => ({
+      ...prev,
+      [key]: value,
+      page: 1 // Reset to page 1 when filters change
+    }))
   }
 
   const clearFilters = () => {
@@ -62,14 +87,14 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
 
   const getActiveFilterCount = () => {
     let count = 0
-    if (filters.category) count++
-    if (filters.brand) count++
-    if (filters.minPrice) count++
-    if (filters.maxPrice) count++
-    if (filters.stockStatus) count++
-    if (filters.status) count++
-    if (filters.isFeatured !== undefined) count++
-    if (filters.search) count++
+    if (localFilters.category) count++
+    if (localFilters.brand) count++
+    if (localFilters.minPrice) count++
+    if (localFilters.maxPrice) count++
+    if (localFilters.stockStatus) count++
+    if (localFilters.status) count++
+    if (localFilters.isFeatured !== undefined) count++
+    if (localFilters.search) count++
     return count
   }
 
@@ -86,14 +111,14 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search products..."
-                value={filters.search || ''}
+                value={localFilters.search || ''}
                 onChange={(e) => updateFilter('search', e.target.value)}
                 className="pl-10"
               />
             </div>
 
             {/* Category */}
-            <Select value={filters.category || 'all'} onValueChange={(value) => updateFilter('category', value === 'all' ? undefined : value)}>
+            <Select value={localFilters.category || 'all'} onValueChange={(value) => updateFilter('category', value === 'all' ? undefined : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
@@ -112,7 +137,7 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
             </Select>
 
             {/* Stock Status */}
-            <Select value={filters.stockStatus || 'all'} onValueChange={(value) => updateFilter('stockStatus', value === 'all' ? undefined : value)}>
+            <Select value={localFilters.stockStatus || 'all'} onValueChange={(value) => updateFilter('stockStatus', value === 'all' ? undefined : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Stock Status" />
               </SelectTrigger>
@@ -125,7 +150,7 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
             </Select>
 
             {/* Status */}
-            <Select value={filters.status || 'all'} onValueChange={(value) => updateFilter('status', value === 'all' ? undefined : value)}>
+            <Select value={localFilters.status || 'all'} onValueChange={(value) => updateFilter('status', value === 'all' ? undefined : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -138,8 +163,8 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
 
             {/* Featured */}
             <Select 
-              value={filters.isFeatured === undefined ? 'all' : filters.isFeatured.toString()} 
-              onValueChange={(value) => updateFilter('isFeatured', value === 'all' ? undefined : value)}
+              value={localFilters.isFeatured === undefined ? 'all' : localFilters.isFeatured.toString()} 
+              onValueChange={(value) => updateFilter('isFeatured', value === 'all' ? undefined : value === 'true')}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Featured" />
@@ -152,7 +177,7 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
             </Select>
 
             {/* Sort */}
-            <Select value={`${filters.sortBy}-${filters.sortOrder}`} onValueChange={(value) => {
+            <Select value={`${localFilters.sortBy}-${localFilters.sortOrder}`} onValueChange={(value) => {
               const [sortBy, sortOrder] = value.split('-')
               updateFilter('sortBy', sortBy)
               updateFilter('sortOrder', sortOrder)
@@ -200,7 +225,7 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search products..."
-                  value={filters.search || ''}
+                  value={localFilters.search || ''}
                   onChange={(e) => updateFilter('search', e.target.value)}
                   className="pl-10"
                 />
@@ -209,7 +234,7 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
               {/* Category */}
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Category</label>
-                <Select value={filters.category || 'all'} onValueChange={(value) => updateFilter('category', value === 'all' ? undefined : value)}>
+                <Select value={localFilters.category || 'all'} onValueChange={(value) => updateFilter('category', value === 'all' ? undefined : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -231,7 +256,7 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
               {/* Stock Status */}
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Stock Status</label>
-                <Select value={filters.stockStatus || 'all'} onValueChange={(value) => updateFilter('stockStatus', value === 'all' ? undefined : value)}>
+                <Select value={localFilters.stockStatus || 'all'} onValueChange={(value) => updateFilter('stockStatus', value === 'all' ? undefined : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select stock status" />
                   </SelectTrigger>
@@ -247,7 +272,7 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
               {/* Status */}
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
-                <Select value={filters.status || 'all'} onValueChange={(value) => updateFilter('status', value === 'all' ? undefined : value)}>
+                <Select value={localFilters.status || 'all'} onValueChange={(value) => updateFilter('status', value === 'all' ? undefined : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -263,8 +288,8 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Featured</label>
                 <Select 
-                  value={filters.isFeatured === undefined ? 'all' : filters.isFeatured.toString()} 
-                  onValueChange={(value) => updateFilter('isFeatured', value === 'all' ? undefined : value)}
+                  value={localFilters.isFeatured === undefined ? 'all' : localFilters.isFeatured.toString()} 
+                  onValueChange={(value) => updateFilter('isFeatured', value === 'all' ? undefined : value === 'true')}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select featured status" />
@@ -280,7 +305,7 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
               {/* Sort */}
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Sort by</label>
-                <Select value={`${filters.sortBy}-${filters.sortOrder}`} onValueChange={(value) => {
+                <Select value={`${localFilters.sortBy}-${localFilters.sortOrder}`} onValueChange={(value) => {
                   const [sortBy, sortOrder] = value.split('-')
                   updateFilter('sortBy', sortBy)
                   updateFilter('sortOrder', sortOrder)

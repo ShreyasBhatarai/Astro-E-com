@@ -75,6 +75,7 @@ export async function getAdminOrders(filters: AdminOrderFilters = {}): Promise<P
       prisma.order.findMany({
         where,
         select: {
+          // Only select fields needed for admin orders table display
           id: true,
           orderNumber: true,
           status: true,
@@ -83,7 +84,7 @@ export async function getAdminOrders(filters: AdminOrderFilters = {}): Promise<P
           createdAt: true,
           shippingName: true,
           shippingPhone: true,
-          reason: true,
+          reason: true, // For cancellation/failure reasons
           user: {
             select: {
               id: true,
@@ -116,7 +117,7 @@ export async function getAdminOrders(filters: AdminOrderFilters = {}): Promise<P
       shippingName: order.shippingName,
       shippingPhone: order.shippingPhone,
       user: order.user,
-      orderItems: order.orderItems, // Only length is needed for display
+      orderItems: order.orderItems, // Keep original format for frontend compatibility
       cancellationReason: order.reason || null,
       failureReason: order.reason || null
     }))
@@ -534,13 +535,18 @@ export async function getRecentOrders(limit: number = 5): Promise<AdminOrderWith
       take: limit,
       orderBy: { createdAt: 'desc' },
       select: {
+        // Minimal fields for recent orders display
         id: true,
         orderNumber: true,
         status: true,
         total: true,
         createdAt: true,
-        shippingName: true,
-        shippingPhone: true
+        user: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
       }
     })
 

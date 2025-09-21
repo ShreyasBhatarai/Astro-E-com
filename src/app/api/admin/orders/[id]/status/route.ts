@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { sendOrderNotificationEmail } from '@/lib/email'
-import { createNotification, sendNotificationEmail } from '@/lib/notification-service'
+import { sendOrderStatusEmail } from '@/lib/email'
+import { createNotification } from '@/lib/notification-service'
 import { NotificationType } from '@prisma/client'
 
 export async function PATCH(
@@ -86,8 +86,8 @@ export async function PATCH(
     })
 
     // Send both email and push notification to user
-    const shippingAddress = order.shippingAddress as any
-    const customerName = `${shippingAddress?.firstName || ''} ${shippingAddress?.lastName || ''}`.trim()
+    const customerName = order.shippingName || order.user?.name || 'Customer'
+    const customerEmail = order.user?.email
     
     if (order.userId) {
       // Send push notification
@@ -99,24 +99,28 @@ export async function PATCH(
         metadata: {
           orderId: order.id,
           orderNumber: order.orderNumber,
-          status
+          status,
+          total: Number(order.total)
         },
         sendEmail: false // We'll send email separately for better control
       })
     }
     
-    // Send email notification
-    if (shippingAddress?.email) {
-      await sendNotificationEmail({
-        user: {
-          email: shippingAddress.email,
-          name: customerName || 'Customer'
-        },
-        type: getNotificationType(status),
-        title: getNotificationTitle(status),
-        message: getNotificationMessage(status, order.orderNumber),
-        metadata: { orderId: order.id, orderNumber: order.orderNumber, status }
-      })
+    // Send beautiful email notification using new templates
+    if (customerEmail) {
+      try {
+        await sendOrderStatusEmail({
+          userEmail: customerEmail,
+          userName: customerName,
+          orderNumber: order.orderNumber,
+          status: status,
+          orderTotal: Number(order.total)
+        })
+        console.log(`✅ Order status email sent to ${customerEmail} for order ${order.orderNumber}`)
+      } catch (emailError) {
+        console.error('❌ Failed to send order status email:', emailError)
+        // Don't fail the whole request if email fails
+      }
     }
 
     return NextResponse.json({

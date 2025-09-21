@@ -122,6 +122,51 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+// PATCH /api/admin/products/[id] - Partial update product
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session || session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' } as AdminApiResponse,
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    const resolvedParams = await params
+
+    // For partial updates, only update the fields provided
+    const updateData: Partial<UpdateProductData> = {}
+    
+    if (body.isActive !== undefined) updateData.isActive = body.isActive
+    if (body.isFeatured !== undefined) updateData.isFeatured = body.isFeatured
+    if (body.stock !== undefined) updateData.stock = body.stock
+    if (body.price !== undefined) updateData.price = body.price
+
+    const product = await updateProduct(resolvedParams.id, updateData)
+
+    return NextResponse.json(
+      { success: true, data: product, message: 'Product updated successfully' } as AdminApiResponse
+    )
+  } catch (error) {
+    console.error('Error updating product:', error)
+    
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { success: false, error: error.message } as AdminApiResponse,
+        { status: 400 }
+      )
+    }
+
+    return NextResponse.json(
+      { success: false, error: 'Failed to update product' } as AdminApiResponse,
+      { status: 500 }
+    )
+  }
+}
+
 // DELETE /api/admin/products/[id] - Delete product (soft delete)
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {

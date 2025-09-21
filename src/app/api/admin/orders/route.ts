@@ -19,11 +19,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     
     // Parse query parameters
+    const statusParam = searchParams.get('status')
+    const paymentMethodParam = searchParams.get('paymentMethod')
+    
     const filters: AdminOrderFilters = {
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1,
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 20,
-      status: searchParams.get('status') as OrderStatus | undefined,
-      paymentMethod: searchParams.get('paymentMethod') as PaymentMethod | undefined,
+      status: statusParam && statusParam !== 'all' ? statusParam as OrderStatus : undefined,
+      paymentMethod: paymentMethodParam && paymentMethodParam !== 'all' ? paymentMethodParam as PaymentMethod : undefined,
       dateFrom: searchParams.get('dateFrom') ? new Date(searchParams.get('dateFrom')! + 'T00:00:00.000Z') : undefined,
       dateTo: searchParams.get('dateTo') ? new Date(searchParams.get('dateTo')! + 'T23:59:59.999Z') : undefined,
       search: searchParams.get('search') || undefined,
@@ -35,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result as AdminApiResponse)
   } catch (error) {
-    // console.error('Error fetching admin orders:', error)
+    console.error('Error fetching admin orders:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch orders' } as AdminApiResponse,
       { status: 500 }

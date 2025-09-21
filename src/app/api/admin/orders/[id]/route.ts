@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getAdminOrderById, updateOrderStatus } from '@/lib/queries/admin-orders'
 import { broadcastOrderUpdate, createOrderUpdateEvent } from '@/lib/realtime'
+import { sendOrderStatusEmail } from '@/lib/email'
 import { AdminApiResponse, UpdateOrderStatusData, OrderStatus } from '@/types'
 
 interface RouteParams {
@@ -101,6 +102,23 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const resolvedParams2 = await params
     const updatedOrder = await updateOrderStatus(resolvedParams2.id, updateData, updatedBy)
     const updateTime = Date.now() - startTime
+
+    // Send email notification to customer
+    if (updatedOrder.user?.email) {
+      try {
+        await sendOrderStatusEmail({
+          userEmail: updatedOrder.user.email,
+          userName: updatedOrder.shippingName || updatedOrder.user.name || 'Customer',
+          orderNumber: updatedOrder.orderNumber,
+          status: updatedOrder.status,
+          orderTotal: Number(updatedOrder.total)
+        })
+        console.log(`✅ Order status email sent to ${updatedOrder.user.email} for order ${updatedOrder.orderNumber}`)
+      } catch (emailError) {
+        console.error('❌ Failed to send order status email:', emailError)
+        // Don't fail the request if email fails
+      }
+    }
 
     // Broadcast real-time update
     try {

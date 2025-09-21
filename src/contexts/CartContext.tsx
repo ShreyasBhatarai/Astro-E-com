@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 
 interface CartItem {
@@ -50,7 +50,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [session?.user?.id, sessionId])
 
-  const refreshCart = async () => {
+  const refreshCart = useCallback(async () => {
     if (!session?.user?.id && !sessionId) {
       setIsLoading(false)
       return
@@ -65,7 +65,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
-          setItems(Array.isArray(data.data) ? data.data : [])
+          // Handle both array format and object format with items property
+          const items = Array.isArray(data.data) ? data.data : (data.data?.items || [])
+          setItems(items)
         } else {
           setItems([])
         }
@@ -78,7 +80,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [session?.user?.id, sessionId])
 
   const addItem = async (newItem: CartItem): Promise<boolean> => {
     try {
@@ -96,8 +98,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       })
 
       if (response.ok) {
-        await refreshCart()
-        return true
+        const result = await response.json()
+        if (result.success) {
+          // Update items directly from API response to avoid extra fetch
+          const items = Array.isArray(result.data) ? result.data : (result.data?.items || [])
+          setItems(items)
+          return true
+        }
       }
       return false
     } catch (error) {
@@ -119,8 +126,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       })
 
       if (response.ok) {
-        await refreshCart()
-        return true
+        const result = await response.json()
+        if (result.success) {
+          // Update items directly from API response
+          const items = Array.isArray(result.data) ? result.data : (result.data?.items || [])
+          setItems(items)
+          return true
+        }
       }
       return false
     } catch (error) {
@@ -150,8 +162,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       })
 
       if (response.ok) {
-        await refreshCart()
-        return true
+        const result = await response.json()
+        if (result.success) {
+          // Update items directly from API response
+          const items = Array.isArray(result.data) ? result.data : (result.data?.items || [])
+          setItems(items)
+          return true
+        }
       }
       return false
     } catch (error) {

@@ -32,7 +32,9 @@ export function FilterSidebar({ categories, className, basePath = '/products' }:
     sort: searchParams.get('sort') || 'createdAt',
     order: (searchParams.get('order') as 'asc' | 'desc') || 'desc',
     rating: searchParams.get('rating') ? Number(searchParams.get('rating')) : undefined,
-    brand: searchParams.get('brand') || ''
+    brand: searchParams.get('brand') || '',
+    inStock: searchParams.get('inStock') === 'true' ? true : undefined,
+    isFeatured: searchParams.get('isFeatured') === 'true' ? true : undefined
   })
 
   // Price range state
@@ -164,6 +166,40 @@ export function FilterSidebar({ categories, className, basePath = '/products' }:
         </Select>
       </div>
 
+      {/* Stock Status */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Availability</label>
+        <Select
+          value={filters.inStock === undefined ? 'all' : 'inStock'}
+          onValueChange={(value) => handleFilterChange('inStock', value === 'inStock' ? true : undefined)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="All products" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All products</SelectItem>
+            <SelectItem value="inStock">In stock only</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Featured Products */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Featured</label>
+        <Select
+          value={filters.isFeatured === undefined ? 'all' : 'featured'}
+          onValueChange={(value) => handleFilterChange('isFeatured', value === 'featured' ? true : undefined)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="All products" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All products</SelectItem>
+            <SelectItem value="featured">Featured only</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Sort */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Sort By</label>
@@ -179,8 +215,14 @@ export function FilterSidebar({ categories, className, basePath = '/products' }:
             <SelectValue placeholder="Sort by..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="createdAt-desc">Newest</SelectItem>
-            <SelectItem value="createdAt-asc">Oldest</SelectItem>
+            <SelectItem value="createdAt-desc">Newest First</SelectItem>
+            <SelectItem value="createdAt-asc">Oldest First</SelectItem>
+            <SelectItem value="name-asc">Name A-Z</SelectItem>
+            <SelectItem value="name-desc">Name Z-A</SelectItem>
+            <SelectItem value="price-asc">Price Low to High</SelectItem>
+            <SelectItem value="price-desc">Price High to Low</SelectItem>
+            <SelectItem value="rating-desc">Highest Rated</SelectItem>
+            <SelectItem value="rating-asc">Lowest Rated</SelectItem>
           </SelectContent>
         </Select>
       </div>

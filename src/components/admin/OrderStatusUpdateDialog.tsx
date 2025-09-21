@@ -67,7 +67,7 @@ export function OrderStatusUpdateDialog({ orderId, currentStatus, onStatusChange
         toast.success(`Order status updated to ${selectedStatus}`)
         onStatusChange?.(selectedStatus)
         router.refresh()
-        // Close dialog only on success
+        // Close dialog only after success
         setIsDialogOpen(false)
         setSelectedStatus(null)
       } else {
@@ -79,6 +79,7 @@ export function OrderStatusUpdateDialog({ orderId, currentStatus, onStatusChange
       // Don't close dialog on error, let user try again or cancel manually
     } finally {
       setIsUpdating(false)
+      // Only close dialog on success - if there was an error, let user try again
     }
   }
 
@@ -91,6 +92,7 @@ export function OrderStatusUpdateDialog({ orderId, currentStatus, onStatusChange
 
   // Prevent opening dialog when disabled by updating state
   const handleOpenChange = (open: boolean) => {
+    // Prevent closing dialog during update
     if (!isUpdating) {
       setIsDialogOpen(open)
       if (!open) {
@@ -127,13 +129,26 @@ export function OrderStatusUpdateDialog({ orderId, currentStatus, onStatusChange
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancel} disabled={isUpdating}>
+            <AlertDialogCancel 
+              onClick={(e) => {
+                e.preventDefault()
+                handleCancel()
+              }} 
+              disabled={isUpdating}
+            >
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmUpdate} disabled={isUpdating}>
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                handleConfirmUpdate()
+              }}
+              disabled={isUpdating}
+              className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
               {isUpdating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {isUpdating ? 'Updating...' : 'Confirm'}
-            </AlertDialogAction>
+            </button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

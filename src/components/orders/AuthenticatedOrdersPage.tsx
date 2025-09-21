@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { Search, ShoppingBag } from 'lucide-react'
+import { Search, ShoppingBag, Filter, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { PageLoader } from '@/components/ui/loader'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatCurrency } from '@/lib/utils'
 import { format } from 'date-fns'
 import Link from 'next/link'
@@ -63,6 +64,10 @@ export function AuthenticatedOrdersPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeStatus, setActiveStatus] = useState('ALL')
+  const [sortBy, setSortBy] = useState('createdAt')
+  const [sortOrder, setSortOrder] = useState('desc')
+  const [dateRange, setDateRange] = useState('all')
+  const [showFilters, setShowFilters] = useState(false)
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -72,18 +77,21 @@ export function AuthenticatedOrdersPage() {
     hasPrev: false
   })
 
-  const fetchOrders = async (page = 1, search = '', status = 'ALL') => {
+  const fetchOrders = async (page = 1, search = '', status = 'ALL', sort = 'createdAt', order = 'desc', dateFilter = 'all') => {
     if (!session) return
 
     setIsLoading(true)
     try {
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '10'
+        limit: '10',
+        sortBy: sort,
+        sortOrder: order
       })
       
       if (search) params.append('search', search)
       if (status && status !== 'ALL') params.append('status', status)
+      if (dateFilter && dateFilter !== 'all') params.append('dateRange', dateFilter)
 
       const response = await fetch(`/api/orders?${params}`)
       const result: OrdersResponse = await response.json()
@@ -103,23 +111,43 @@ export function AuthenticatedOrdersPage() {
 
   useEffect(() => {
     if (session) {
-      fetchOrders(1, searchQuery, activeStatus)
+      fetchOrders(1, searchQuery, activeStatus, sortBy, sortOrder, dateRange)
     }
-  }, [session, activeStatus])
+  }, [session, activeStatus, sortBy, sortOrder, dateRange])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    fetchOrders(1, searchQuery, activeStatus)
+    fetchOrders(1, searchQuery, activeStatus, sortBy, sortOrder, dateRange)
   }
 
   const handleStatusChange = (status: string) => {
     setActiveStatus(status)
-    setSearchQuery('')
     setPagination(prev => ({ ...prev, page: 1 }))
   }
 
   const handlePageChange = (newPage: number) => {
-    fetchOrders(newPage, searchQuery, activeStatus)
+    fetchOrders(newPage, searchQuery, activeStatus, sortBy, sortOrder, dateRange)
+  }
+
+  const handleSortChange = (value: string) => {
+    const [newSortBy, newSortOrder] = value.split('-')
+    setSortBy(newSortBy)
+    setSortOrder(newSortOrder)
+    setPagination(prev => ({ ...prev, page: 1 }))
+  }
+
+  const handleDateRangeChange = (value: string) => {
+    setDateRange(value)
+    setPagination(prev => ({ ...prev, page: 1 }))
+  }
+
+  const clearFilters = () => {
+    setSearchQuery('')
+    setActiveStatus('ALL')
+    setSortBy('createdAt')
+    setSortOrder('desc')
+    setDateRange('all')
+    setPagination(prev => ({ ...prev, page: 1 }))
   }
 
   const getStatusBadge = (status: string) => {
@@ -148,20 +176,81 @@ export function AuthenticatedOrdersPage() {
       {/* Search Bar */}
       <Card className="mb-6">
         <CardContent className="pt-6">
-          <form onSubmit={handleSearch} className="flex gap-4">
-            <div className="flex-1">
-              <Input
-                type="text"
-                placeholder="Search by order number or product name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+          <form onSubmit={handleSearch} className="space-y-4">
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Input
+                  type="text"
+                  placeholder="Search by order number or product name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="font-normal"
+                />
+              </div>
+              <Button type="submit" disabled={isLoading} className="font-normal">
+                <Search className="h-4 w-4 mr-2" />
+                Search
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowFilters(!showFilters)}
                 className="font-normal"
-              />
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filters
+              </Button>
             </div>
-            <Button type="submit" disabled={isLoading} className="font-normal">
-              <Search className="h-4 w-4 mr-2" />
-              Search
-            </Button>
+            
+            {/* Advanced Filters */}
+            {showFilters && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Sort By</label>
+                  <Select value={`${sortBy}-${sortOrder}`} onValueChange={handleSortChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sort by..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="createdAt-desc">Newest First</SelectItem>
+                      <SelectItem value="createdAt-asc">Oldest First</SelectItem>
+                      <SelectItem value="total-desc">Highest Amount</SelectItem>
+                      <SelectItem value="total-asc">Lowest Amount</SelectItem>
+                      <SelectItem value="orderNumber-asc">Order Number A-Z</SelectItem>
+                      <SelectItem value="orderNumber-desc">Order Number Z-A</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Date Range</label>
+                  <Select value={dateRange} onValueChange={handleDateRangeChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select date range..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="week">This Week</SelectItem>
+                      <SelectItem value="month">This Month</SelectItem>
+                      <SelectItem value="3months">Last 3 Months</SelectItem>
+                      <SelectItem value="year">This Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-end">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={clearFilters}
+                    className="font-normal w-full"
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>

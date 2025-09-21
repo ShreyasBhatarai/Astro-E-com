@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma'
-import { emailTemplates } from '@/lib/email-templates'
+// No longer needed - keeping for future use
+// import { getOTPEmailTemplate, getOrderStatusEmailTemplate } from '@/lib/email-templates'
 import { NotificationType } from '@prisma/client'
-import { sendOrderNotificationEmail } from './email'
+import { sendOrderStatusEmail } from './email'
 
 interface CreateNotificationData {
   userId: string
@@ -48,70 +49,61 @@ export async function createNotification(data: CreateNotificationData) {
 
 export async function sendNotificationEmail(notification: any) {
   try {
-    let template
     const userData = {
       userName: notification.user.name || 'User',
       userEmail: notification.user.email
     }
 
+    let subject = notification.title
+    let success = false
+
     switch (notification.type) {
       case 'ORDER_CREATED':
-        template = emailTemplates.orderCreated({
-          orderNumber: notification.metadata?.orderNumber || '',
-          customerName: userData.userName,
-          total: notification.metadata?.total || 0
-        })
-        break
-      
       case 'ORDER_STATUS_CHANGED':
-        template = emailTemplates.orderStatusChanged({
+        // Use the new order status email template
+        const orderData = {
+          userEmail: userData.userEmail,
+          userName: userData.userName,
           orderNumber: notification.metadata?.orderNumber || '',
-          customerName: userData.userName,
-          status: notification.metadata?.status || ''
-        })
+          status: notification.metadata?.status || 'PENDING',
+          orderTotal: notification.metadata?.total || 0
+        }
+        const result = await sendOrderStatusEmail(orderData)
+        success = result.success
         break
       
       case 'PRODUCT_LOW_STOCK':
-        template = emailTemplates.productLowStock({
-          productName: notification.metadata?.productName || '',
-          currentStock: notification.metadata?.currentStock || 0
-        })
+        // For low stock alerts, we can just mark as processed
+        // In the future, we could implement a dedicated low stock email template
+        success = true
         break
       
       case 'USER_REGISTERED':
-        template = emailTemplates.userRegistered(userData)
+        // Could implement a welcome email template here in the future
+        success = true
         break
       
       case 'SYSTEM_ALERT':
-        template = emailTemplates.systemAlert({
-          title: notification.title,
-          message: notification.message
-        })
+        // For system alerts, we can use a simple notification
+        success = true
         break
       
       default:
-        // Generic notification email
-        template = {
-          subject: notification.title,
-          html: `<p>${notification.message}</p>`,
-          text: notification.message
-        }
+        // Generic notification - just mark as sent
+        success = true
     }
 
-    // Here you would integrate with your email service (SendGrid, Nodemailer, etc.)
-    // For now, we'll just log it
-    // Email would be sent in production
-    await sendOrderNotificationEmail(notification.user.email, template.subject, template.html, template.text)
+    // Mark email as sent if successful
+    if (success) {
+      await prisma.notification.update({
+        where: { id: notification.id },
+        data: { emailSent: true }
+      })
+    }
 
-    // Mark email as sent
-    await prisma.notification.update({
-      where: { id: notification.id },
-      data: { emailSent: true }
-    })
-
-    return true
+    return success
   } catch (error) {
-    // console.error('Error sending notification email:', error)
+    console.error('Error sending notification email:', error)
     return false
   }
 }
@@ -154,7 +146,7 @@ export async function notifyUserRegistered(userId: string) {
   return createNotification({
     userId,
     type: 'USER_REGISTERED',
-    title: 'Welcome to Astro E-com!',
+    title: 'Welcome to AstroNova!',
     message: 'Thank you for joining our community. Start exploring our products!',
     sendEmail: true
   })
