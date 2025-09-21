@@ -3,11 +3,11 @@
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CategoryWithCount } from '@/types'
+import { OptimizedCategory } from '@/types'
 import { cn } from '@/lib/utils'
 
 interface CategoryGridProps {
-  categories: CategoryWithCount[]
+  categories: OptimizedCategory[]
   className?: string
 }
 
@@ -50,7 +50,7 @@ export function CategoryGrid({ categories, className }: CategoryGridProps) {
   {categories.map((category) => (
     <Link
       key={category.id}
-      href={`/categories/${category.slug}`}
+      href={`/products?category=${category.slug}`}
       className="shrink-0 basis-[28%] sm:basis-[28%] md:basis-[18%] lg:basis-[18%] xl:basis-[18%] 2xl:basis-[18%]"
     >
       <div className="group cursor-pointer">

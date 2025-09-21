@@ -38,7 +38,7 @@ export function FilterSidebar({ categories, className, basePath = '/products' }:
   // Price range state
   const [priceRange, setPriceRange] = useState<[number, number]>([
     filters.minPrice || 0,
-    filters.maxPrice || 300000
+    filters.maxPrice || 20000
   ])
 
   // Update URL when filters change
@@ -122,9 +122,9 @@ export function FilterSidebar({ categories, className, basePath = '/products' }:
           <Slider
             value={priceRange}
             onValueChange={handlePriceRangeChange}
-            max={300000}
+            max={20000}
             min={0}
-            step={1000}
+            step={500}
             className="w-full"
            
           />

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { withErrorHandling } from '@/lib/error-handling'
-import { ProductWithDetails, CategoryWithCount, ProductFilters, PaginatedResponse } from '@/types'
+import { ProductWithDetails, CategoryWithCount, ProductFilters, PaginatedResponse, OptimizedCategory } from '@/types'
 
 export async function getProducts(filters: ProductFilters = {}): Promise<PaginatedResponse<ProductWithDetails>> {
   const {
@@ -249,13 +249,17 @@ export async function getProductBySlug(slug: string): Promise<ProductWithDetails
   }
 }
 
-export async function getCategories(): Promise<CategoryWithCount[]> {
+export async function getCategories(): Promise<OptimizedCategory[]> {
   return withErrorHandling(async () => {
     const categories = await prisma.category.findMany({
       where: {
         isActive: true
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        image: true,
         _count: {
           select: {
             products: {
@@ -272,8 +276,13 @@ export async function getCategories(): Promise<CategoryWithCount[]> {
     })
 
     return categories.map(category => ({
-      ...category,
-      productCount: category._count.products
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      image: category.image,
+      _count: {
+        products: category._count.products
+      }
     }))
   }, 'getCategories')
 }

@@ -51,10 +51,10 @@ export default function CheckoutPage() {
 
   // Redirect if cart is empty
   useEffect(() => {
-    if (items.length === 0) {
+    if (!Array.isArray(items) || items.length === 0) {
       router.push('/cart')
     }
-  }, [items.length, router])
+  }, [items, router])
 
   const handleOrderSubmit = async (data: CreateOrderData) => {
     setIsSubmitting(true)
@@ -110,10 +110,10 @@ export default function CheckoutPage() {
         throw new Error(result.error || 'Failed to create order')
       }
 
-      // Clear cart and redirect to MyOrders page
-      clearCart()
+      // Clear cart and redirect to orders page
+      await clearCart()
       
-      toast.success('Order placed successfully! You can view your order in MyOrders.')
+      toast.success('Order placed successfully! You can view your order in My Orders.')
       router.push('/orders')
       
     } catch (error) {
@@ -141,7 +141,7 @@ export default function CheckoutPage() {
     return null
   }
 
-  if (items.length === 0) {
+  if (!Array.isArray(items) || items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
@@ -152,7 +152,7 @@ export default function CheckoutPage() {
             Add some products to your cart to proceed to checkout.
           </p>
           <Button asChild>
-            <Link href="/categories">Browse Products</Link>
+            <Link href="/products">Browse Products</Link>
           </Button>
         </div>
       </div>

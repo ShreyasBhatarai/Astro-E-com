@@ -182,7 +182,7 @@ export default function OrdersPage() {
                     We couldn&apos;t find any orders matching your search. Please check your order number or try a different search.
                   </p>
                   <Button asChild>
-                    <a href="/categories">Start Shopping</a>
+                    <a href="/products">Start Shopping</a>
                   </Button>
                 </div>
               </CardContent>

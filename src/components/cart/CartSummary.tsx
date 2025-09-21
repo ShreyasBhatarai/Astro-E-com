@@ -29,7 +29,7 @@ export function CartSummary({ className }: CartSummaryProps) {
             Your cart is empty
           </p>
           <Button asChild className="w-full">
-            <Link href="/categories">
+            <Link href="/products">
               Browse Products
             </Link>
           </Button>
@@ -73,7 +73,7 @@ export function CartSummary({ className }: CartSummaryProps) {
 
         {/* Continue Shopping */}
         <Button variant="outline" asChild className="w-full">
-          <Link href="/categories">
+          <Link href="/products">
             Continue Shopping
           </Link>
         </Button>

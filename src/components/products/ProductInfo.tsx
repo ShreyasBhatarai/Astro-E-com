@@ -26,7 +26,7 @@ export function ProductInfo({ product, className }: ProductInfoProps) {
   const [isBuyingNow, setIsBuyingNow] = useState(false)
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(false)
   
-  const { addItem } = useCart()
+  const { addItem, setDirectCheckoutItems } = useCart()
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
   const router = useRouter()
 
@@ -98,20 +98,15 @@ export function ProductInfo({ product, className }: ProductInfoProps) {
     
     setIsBuyingNow(true)
     try {
-      // Add to cart first
-      const success = await addItem({
+      // Set items directly for checkout without adding to cart
+      setDirectCheckoutItems([{
         productId: product.id,
         name: product.name,
         price: Number(product.price),
         quantity,
         image: product.images[0],
         slug: product.slug
-      })
-      
-      if (!success) {
-        toast.error('Failed to add item to cart')
-        return
-      }
+      }])
       
       // Navigate to checkout
       router.push('/checkout')

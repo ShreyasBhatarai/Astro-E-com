@@ -213,7 +213,7 @@ export function AuthenticatedOrdersPage() {
                   }
                 </p>
                 <Button asChild className="font-normal">
-                  <Link href="/categories">Start Shopping</Link>
+                  <Link href="/products">Start Shopping</Link>
                 </Button>
               </div>
             </CardContent>

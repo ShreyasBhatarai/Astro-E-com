@@ -63,14 +63,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </li>
             <ChevronRight className="h-4 w-4 text-gray-400" />
             <li>
-              <Link href="/categories" className="hover:text-astro-primary transition-colors">
-                Categories
+              <Link href="/products" className="hover:text-astro-primary transition-colors">
+               Products
               </Link>
             </li>
             <ChevronRight className="h-4 w-4 text-gray-400" />
             <li>
               <Link 
-                href={`/categories/${product.category?.slug}`}
+                href={`/products?category=${product.category?.slug}`}
                 className="hover:text-astro-primary transition-colors"
               >
                 {product.category?.name}

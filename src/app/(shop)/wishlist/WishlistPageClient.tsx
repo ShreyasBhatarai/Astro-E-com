@@ -66,7 +66,7 @@ export function WishlistPageClient() {
             Save products you love to your wishlist for easy access later.
           </p>
           <Button asChild>
-            <Link href="/categories">
+            <Link href="/products">
               Browse Products
             </Link>
           </Button>
@@ -95,7 +95,7 @@ export function WishlistPageClient() {
       {/* Actions */}
       <div className="mt-8 flex justify-center">
         <Button variant="outline" asChild>
-          <Link href="/categories">
+          <Link href="/products">
             Continue Shopping
           </Link>
         </Button>

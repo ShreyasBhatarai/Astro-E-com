@@ -377,7 +377,7 @@ export default function OrderPage({ params }: OrderPageProps) {
             <CardContent className="pt-6">
               <div className="space-y-3">
                 <Button asChild className="w-full">
-                  <Link href="/categories">
+                  <Link href="/products">
                     Continue Shopping
                   </Link>
                 </Button>

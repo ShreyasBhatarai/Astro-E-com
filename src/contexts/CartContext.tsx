@@ -22,6 +22,7 @@ interface CartContextType {
   getTotalItems: () => number
   isLoading: boolean
   refreshCart: () => Promise<void>
+  setDirectCheckoutItems: (items: CartItem[]) => void
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -29,7 +30,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 export function CartProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession()
   const [items, setItems] = useState<CartItem[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true) // Start with loading true
   const [sessionId, setSessionId] = useState<string>('')
 
   // Generate or get session ID for guest users
@@ -50,7 +51,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [session?.user?.id, sessionId])
 
   const refreshCart = async () => {
-    if (!session?.user?.id && !sessionId) return
+    if (!session?.user?.id && !sessionId) {
+      setIsLoading(false)
+      return
+    }
     
     try {
       setIsLoading(true)
@@ -61,11 +65,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
-          setItems(data.data)
+          setItems(Array.isArray(data.data) ? data.data : [])
+        } else {
+          setItems([])
         }
+      } else {
+        setItems([])
       }
     } catch (error) {
       // console.error('Error fetching cart:', error)
+      setItems([])
     } finally {
       setIsLoading(false)
     }
@@ -186,6 +195,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return items.reduce((total, item) => total + item.quantity, 0)
   }
 
+  const setDirectCheckoutItems = (checkoutItems: CartItem[]) => {
+    setItems(checkoutItems)
+  }
+
   return (
     <CartContext.Provider value={{
       items,
@@ -196,7 +209,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       getTotal,
       getTotalItems,
       isLoading,
-      refreshCart
+      refreshCart,
+      setDirectCheckoutItems
     }}>
       {children}
     </CartContext.Provider>

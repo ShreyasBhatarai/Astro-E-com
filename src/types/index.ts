@@ -24,6 +24,17 @@ export interface CategoryWithCount extends Category {
   }
 }
 
+// Optimized category type for API responses (only essential fields)
+export interface OptimizedCategory {
+  id: string
+  name: string
+  slug: string
+  image: string | null
+  _count: {
+    products: number
+  }
+}
+
 export interface OrderWithDetails extends Order {
   orderItems: (OrderItem & {
     product: Product

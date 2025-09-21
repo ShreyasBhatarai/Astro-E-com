@@ -10,10 +10,22 @@ import { formatCurrency } from '@/lib/utils'
 import Image from 'next/image'
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, getTotal, getTotalItems } = useCart()
+  const { items, removeItem, updateQuantity, getTotal, getTotalItems, isLoading } = useCart()
 
+  // Show loading state while cart is being fetched
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading cart...</p>
+        </div>
+      </div>
+    )
+  }
 
-  if (items.length === 0) {
+  // Ensure items is an array before checking length
+  if (!Array.isArray(items) || items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
@@ -27,7 +39,7 @@ export default function CartPage() {
             Add some products to your cart to get started.
           </p>
           <Button asChild>
-            <Link href="/categories">
+            <Link href="/products">
               Browse Products
             </Link>
           </Button>
@@ -41,7 +53,7 @@ export default function CartPage() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/categories">
+          <Link href="/products">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -56,7 +68,7 @@ export default function CartPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
-          {items.map((item) => (
+          {Array.isArray(items) && items.map((item) => (
             <Card key={item.productId} className="overflow-hidden">
               <CardContent className="p-4">
                 <div className="flex gap-4">
@@ -168,7 +180,7 @@ export default function CartPage() {
 
               {/* Continue Shopping */}
               <Button variant="outline" asChild className="w-full">
-                <Link href="/categories">
+                <Link href="/products">
                   Continue Shopping
                 </Link>
               </Button>
