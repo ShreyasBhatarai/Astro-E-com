@@ -1,26 +1,1142 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Light font weights for better mobile experience */
+@layer base {
+  * {
+    font-weight: 400; /* Use normal weight as default */
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600; /* Medium weight for headings */
+  }
+  
+  .font-bold {
+    font-weight: 600; /* Reduce bold to semi-bold */
+  }
+  
+  .font-semibold {
+    font-weight: 500; /* Reduce semibold to medium */
+  }
+  
+  .font-medium {
+    font-weight: 500; /* Keep medium */
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.75rem;
+    
+    /* Modern design system colors */
+    --astro-primary: 220 100% 58%;
+    --astro-primary-hover: 220 100% 48%;
+    --astro-primary-light: 220 100% 96%;
+    --astro-gray-50: 0 0% 98%;
+    --astro-gray-100: 0 0% 96%;
+    --astro-gray-200: 0 0% 93%;
+    --astro-gray-300: 0 0% 87%;
+    --astro-gray-400: 0 0% 64%;
+    --astro-gray-500: 0 0% 45%;
+    --astro-gray-600: 0 0% 32%;
+    --astro-gray-700: 0 0% 25%;
+    --astro-gray-800: 0 0% 15%;
+    --astro-gray-900: 0 0% 9%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Mobile-first responsive utilities */
+@layer utilities {
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  .safe-area-inset {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom scrollbar for mobile */
+@layer base {
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/30;
+  }
+}
+
+/* Animation utilities */
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+  
+  .animate-slide-in {
+    animation: slide-in 0.3s ease-out;
+  }
+}
+
+/* NPR Currency Symbol Support */
+@font-face {
+  font-family: 'Devanagari';
+  src: local('Noto Sans Devanagari'), local('Arial Unicode MS'), local('Lucida Grande');
+  unicode-range: U+0900-097F;
+}
+
+/* Ensure NPR currency symbol displays correctly */
+.npr-currency {
+  font-family: 'Devanagari', 'Noto Sans Devanagari', 'Arial Unicode MS', 'Lucida Grande', sans-serif;
+}
+
+/* Mobile-specific checkout styles */
+@media (max-width: 768px) {
+  /* Touch-friendly form inputs */
+  .checkout-input {
+    min-height: 48px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Touch-friendly buttons */
+  .checkout-button {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* Cart item touch targets */
+  .cart-item-control {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Order status timeline mobile spacing */
+  .order-timeline-mobile {
+    padding: 1rem 0;
+  }
+  
+  /* Mobile cart summary */
+  .cart-summary-mobile {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    padding: 1rem;
+    z-index: 10;
+  }
+}
+
+/* Order status colors */
+.order-status-pending {
+  @apply bg-yellow-100 text-yellow-800 border-yellow-200;
+}
+
+.order-status-confirmed {
+  @apply bg-blue-100 text-blue-800 border-blue-200;
+}
+
+.order-status-processing {
+  @apply bg-purple-100 text-purple-800 border-purple-200;
+}
+
+.order-status-shipped {
+  @apply bg-indigo-100 text-indigo-800 border-indigo-200;
+}
+
+.order-status-delivered {
+  @apply bg-green-100 text-green-800 border-green-200;
+}
+
+.order-status-cancelled {
+  @apply bg-red-100 text-red-800 border-red-200;
+}
+
+.order-status-failed {
+  @apply bg-red-100 text-red-800 border-red-200;
+}
+
+/* Checkout flow styling */
+.checkout-step-active {
+  @apply border-primary bg-primary/5;
+}
+
+.checkout-step-completed {
+  @apply border-green-500 bg-green-50;
+}
+
+.checkout-step-pending {
+  @apply border-muted bg-muted/30;
+}
+
+/* Cart animations */
+.cart-item-enter {
+  animation: cartItemEnter 0.3s ease-out;
+}
+
+.cart-item-exit {
+  animation: cartItemExit 0.3s ease-in;
+}
+
+@keyframes cartItemEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cartItemExit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* Phone input validation styles */
+.phone-input-valid {
+  @apply border-green-500 focus:border-green-500 focus:ring-green-500;
+}
+
+.phone-input-invalid {
+  @apply border-red-500 focus:border-red-500 focus:ring-red-500;
+}
+
+/* Loading states */
+.loading-skeleton {
+  @apply animate-pulse bg-muted rounded;
+}
+
+/* Toast positioning for mobile */
+@media (max-width: 768px) {
+  .toast-mobile {
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+  }
+}
+
+/* Admin-specific styles */
+@layer base {
+  :root {
+    /* Admin theme colors */
+    --admin-primary: 221.2 83.2% 53.3%;
+    --admin-primary-foreground: 210 40% 98%;
+    --admin-secondary: 210 40% 96%;
+    --admin-secondary-foreground: 222.2 84% 4.9%;
+    --admin-accent: 210 40% 96%;
+    --admin-accent-foreground: 222.2 84% 4.9%;
+    --admin-muted: 210 40% 96%;
+    --admin-muted-foreground: 215.4 16.3% 46.9%;
+    --admin-border: 214.3 31.8% 91.4%;
+    --admin-input: 214.3 31.8% 91.4%;
+    --admin-ring: 221.2 83.2% 53.3%;
+    
+    /* Security-focused colors */
+    --security-success: 142.1 76.2% 36.3%;
+    --security-warning: 38 92% 50%;
+    --security-error: 0 84.2% 60.2%;
+    --security-info: 221.2 83.2% 53.3%;
+  }
+
+  .dark {
+    --admin-primary: 217.2 91.2% 59.8%;
+    --admin-primary-foreground: 222.2 84% 4.9%;
+    --admin-secondary: 217.2 32.6% 17.5%;
+    --admin-secondary-foreground: 210 40% 98%;
+    --admin-accent: 217.2 32.6% 17.5%;
+    --admin-accent-foreground: 210 40% 98%;
+    --admin-muted: 217.2 32.6% 17.5%;
+    --admin-muted-foreground: 215 20.2% 65.1%;
+    --admin-border: 217.2 32.6% 17.5%;
+    --admin-input: 217.2 32.6% 17.5%;
+    --admin-ring: 224.3 76.3% 94.1%;
+  }
+}
+
+/* Admin dashboard metrics styling */
+.admin-metric-card {
+  @apply bg-card border border-border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow;
+}
+
+.admin-metric-value {
+  @apply text-2xl font-bold text-foreground;
+}
+
+.admin-metric-label {
+  @apply text-sm font-medium text-muted-foreground;
+}
+
+.admin-metric-trend {
+  @apply flex items-center space-x-1 text-xs;
+}
+
+.admin-metric-trend-up {
+  @apply text-green-600;
+}
+
+.admin-metric-trend-down {
+  @apply text-red-600;
+}
+
+.admin-metric-trend-neutral {
+  @apply text-muted-foreground;
+}
+
+/* Admin sidebar styling */
+.admin-sidebar {
+  @apply bg-background border-r border-border;
+}
+
+.admin-sidebar-item {
+  @apply flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors;
+}
+
+.admin-sidebar-item-active {
+  @apply bg-primary text-primary-foreground;
+}
+
+.admin-sidebar-item-inactive {
+  @apply text-muted-foreground hover:bg-accent hover:text-accent-foreground;
+}
+
+
+/* Admin header styling */
+.admin-header {
+  @apply bg-background border-b border-border;
+}
+
+.admin-header-user-menu {
+  @apply bg-background border border-border shadow-lg;
+}
+
+/* 2FA interface styling */
+.two-factor-setup {
+  @apply bg-background border border-border rounded-lg p-6;
+}
+
+.two-factor-qr-code {
+  @apply bg-white p-4 rounded-lg border border-border;
+}
+
+.two-factor-backup-codes {
+  @apply grid grid-cols-2 gap-2;
+}
+
+.two-factor-backup-code {
+  @apply flex items-center space-x-2 p-2 bg-muted rounded font-mono text-sm;
+}
+
+.two-factor-verification {
+  @apply bg-background border border-border rounded-lg p-6;
+}
+
+.two-factor-input {
+  @apply text-center text-lg tracking-widest font-mono;
+}
+
+/* Security indicators */
+.security-indicator {
+  @apply inline-flex items-center space-x-1 text-xs font-medium;
+}
+
+.security-indicator-success {
+  @apply text-green-600 bg-green-100 px-2 py-1 rounded-full;
+}
+
+.security-indicator-warning {
+  @apply text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full;
+}
+
+.security-indicator-error {
+  @apply text-red-600 bg-red-100 px-2 py-1 rounded-full;
+}
+
+.security-indicator-info {
+  @apply text-blue-600 bg-blue-100 px-2 py-1 rounded-full;
+}
+
+/* Mobile-optimized admin styles */
+@media (max-width: 768px) {
+  .admin-metric-card {
+    @apply p-4;
+  }
+  
+  .admin-metric-value {
+    @apply text-xl;
+  }
+  
+  .admin-sidebar-item {
+    @apply px-2 py-3;
+  }
+  
+  .two-factor-setup {
+    @apply p-4;
+  }
+  
+  .two-factor-backup-codes {
+    @apply grid-cols-1 gap-3;
+  }
+  
+  .two-factor-backup-code {
+    @apply p-3;
+  }
+  
+  .admin-header {
+    @apply px-4;
+  }
+  
+  .admin-dashboard-grid {
+    @apply grid-cols-1 gap-4;
+  }
+}
+
+@media (min-width: 769px) {
+  .admin-dashboard-grid {
+    @apply grid-cols-2 gap-6;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-dashboard-grid {
+    @apply grid-cols-4 gap-6;
+  }
+}
+
+/* Admin table responsive styling */
+.admin-table-mobile {
+  @apply block md:hidden;
+}
+
+.admin-table-desktop {
+  @apply hidden md:block;
+}
+
+.admin-table-card {
+  @apply border rounded-lg p-4 space-y-3;
+}
+
+/* Admin form styling */
+.admin-form-section {
+  @apply space-y-6;
+}
+
+.admin-form-group {
+  @apply space-y-2;
+}
+
+.admin-form-label {
+  @apply text-sm font-medium text-foreground;
+}
+
+.admin-form-input {
+  @apply w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+}
+
+.admin-form-error {
+  @apply text-sm text-destructive;
+}
+
+/* Admin loading states */
+.admin-loading-skeleton {
+  @apply animate-pulse bg-muted rounded;
+}
+
+.admin-loading-card {
+  @apply space-y-4;
+}
+
+.admin-loading-metric {
+  @apply space-y-2;
+}
+
+/* Admin accessibility improvements */
+.admin-focus-visible {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+}
+
+.admin-sr-only {
+  @apply sr-only;
+}
+
+/* Admin print styles */
+@media print {
+  .admin-sidebar,
+  .admin-header,
+  .admin-actions {
+    @apply hidden;
+  }
+  
+  .admin-content {
+    @apply p-0;
+  }
+}
+
+
+/* Admin Product and Order Management Styles */
+
+/* Product Image Gallery */
+.product-image-gallery {
+  @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4;
+}
+
+.product-image-item {
+  @apply relative aspect-square rounded-lg overflow-hidden border border-gray-200;
+}
+
+.product-image-item img {
+  @apply w-full h-full object-cover transition-transform duration-200 group-hover:scale-105;
+}
+
+.product-image-overlay {
+  @apply absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center;
+}
+
+.product-image-actions {
+  @apply opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2;
+}
+
+/* Order Status Badges */
+.order-status-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.order-status-pending {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.order-status-processing {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.order-status-packaged {
+  @apply bg-purple-100 text-purple-800;
+}
+
+.order-status-shipped {
+  @apply bg-indigo-100 text-indigo-800;
+}
+
+.order-status-delivered {
+  @apply bg-green-100 text-green-800;
+}
+
+.order-status-cancelled {
+  @apply bg-red-100 text-red-800;
+}
+
+.order-status-failed {
+  @apply bg-gray-100 text-gray-800;
+}
+
+/* Stock Status Badges */
+.stock-status-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.stock-status-in-stock {
+  @apply bg-green-100 text-green-800;
+}
+
+.stock-status-low-stock {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.stock-status-out-of-stock {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Real-time Update Indicators */
+.realtime-indicator {
+  @apply flex items-center gap-2 text-sm;
+}
+
+.realtime-dot {
+  @apply w-2 h-2 rounded-full animate-pulse;
+}
+
+.realtime-connected {
+  @apply bg-green-500;
+}
+
+.realtime-disconnected {
+  @apply bg-red-500;
+}
+
+.realtime-connecting {
+  @apply bg-yellow-500;
+}
+
+/* Admin Table Responsive Design */
+.admin-table-container {
+  @apply overflow-x-auto;
+}
+
+.admin-table {
+  @apply min-w-full divide-y divide-gray-200;
+}
+
+.admin-table th {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+
+.admin-table td {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+}
+
+/* Mobile Card Layout for Tables */
+.admin-mobile-card {
+  @apply border border-gray-200 rounded-lg p-4 space-y-3;
+}
+
+.admin-mobile-card-header {
+  @apply flex items-start justify-between;
+}
+
+.admin-mobile-card-content {
+  @apply space-y-2;
+}
+
+.admin-mobile-card-actions {
+  @apply flex items-center justify-between pt-3 border-t border-gray-200;
+}
+
+/* Form Layout Optimizations */
+.admin-form-container {
+  @apply space-y-6;
+}
+
+.admin-form-section {
+  @apply bg-white rounded-lg border border-gray-200 p-6;
+}
+
+.admin-form-section-header {
+  @apply border-b border-gray-200 pb-4 mb-6;
+}
+
+.admin-form-section-title {
+  @apply text-lg font-semibold text-gray-900;
+}
+
+.admin-form-grid {
+  @apply grid grid-cols-1 lg:grid-cols-3 gap-6;
+}
+
+.admin-form-main {
+  @apply lg:col-span-2 space-y-6;
+}
+
+.admin-form-sidebar {
+  @apply space-y-6;
+}
+
+/* Filter Components */
+.admin-filters-container {
+  @apply bg-white rounded-lg border border-gray-200 p-4;
+}
+
+.admin-filters-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4;
+}
+
+.admin-active-filters {
+  @apply flex items-center gap-2 mt-4 pt-4 border-t;
+}
+
+.admin-filter-badge {
+  @apply flex items-center gap-1 bg-gray-100 text-gray-800 px-2 py-1 rounded-md text-sm;
+}
+
+/* Loading States */
+.admin-loading-skeleton {
+  @apply animate-pulse bg-gray-200 rounded;
+}
+
+.admin-loading-table {
+  @apply space-y-4;
+}
+
+.admin-loading-row {
+  @apply grid grid-cols-6 gap-4 py-4;
+}
+
+/* Empty States */
+.admin-empty-state {
+  @apply bg-white rounded-lg border border-gray-200 p-8 text-center;
+}
+
+.admin-empty-state-icon {
+  @apply h-12 w-12 text-gray-400 mx-auto mb-4;
+}
+
+.admin-empty-state-title {
+  @apply text-lg font-medium text-gray-900 mb-2;
+}
+
+.admin-empty-state-description {
+  @apply text-gray-600 mb-4;
+}
+
+/* Pagination */
+.admin-pagination {
+  @apply p-4 border-t border-gray-200;
+}
+
+.admin-pagination-info {
+  @apply text-sm text-gray-600;
+}
+
+.admin-pagination-controls {
+  @apply flex items-center gap-2;
+}
+
+/* Image Upload */
+.admin-image-upload {
+  @apply border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors rounded-lg p-6 text-center;
+}
+
+.admin-image-upload-icon {
+  @apply h-12 w-12 text-gray-400 mx-auto mb-4;
+}
+
+.admin-image-upload-title {
+  @apply text-lg font-medium text-gray-900 mb-2;
+}
+
+.admin-image-upload-description {
+  @apply text-gray-600 mb-4;
+}
+
+.admin-image-upload-constraints {
+  @apply text-sm text-gray-500 mb-4;
+}
+
+/* Status Timeline */
+.admin-status-timeline {
+  @apply space-y-4;
+}
+
+.admin-timeline-item {
+  @apply flex items-start gap-3;
+}
+
+.admin-timeline-dot {
+  @apply w-3 h-3 rounded-full mt-1 flex-shrink-0;
+}
+
+.admin-timeline-content {
+  @apply flex-1 min-w-0;
+}
+
+.admin-timeline-status {
+  @apply font-medium text-gray-900;
+}
+
+.admin-timeline-time {
+  @apply text-sm text-gray-500;
+}
+
+.admin-timeline-reason {
+  @apply text-sm text-gray-600 mt-1;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .admin-form-grid {
+    @apply grid-cols-1;
+  }
+  
+  .admin-filters-grid {
+    @apply grid-cols-1;
+  }
+  
+  .admin-table-container {
+    @apply hidden;
+  }
+  
+  .admin-mobile-cards {
+    @apply block;
+  }
+}
+
+@media (min-width: 769px) {
+  .admin-mobile-cards {
+    @apply hidden;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .admin-touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  .admin-button {
+    @apply min-h-[44px] px-4 py-2;
+  }
+  
+  .admin-input {
+    @apply min-h-[44px] px-3 py-2;
+  }
+}
+
+/* Accessibility improvements */
+.admin-focus-visible {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.admin-sr-only {
+  @apply sr-only;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .admin-table th {
+    @apply border-b-2 border-gray-900;
+  }
+  
+  .admin-table td {
+    @apply border-b border-gray-700;
+  }
+  
+  .order-status-badge,
+  .stock-status-badge {
+    @apply border border-current;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .admin-loading-skeleton {
+    @apply animate-none;
+  }
+  
+  .realtime-dot {
+    @apply animate-none;
+  }
+  
+  .product-image-item img {
+    @apply transition-none;
+  }
+}
+
+/* Banner Management Styles */
+
+/* Kanban drag and drop styles */
+.banner-kanban-item {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.banner-kanban-item.dragging {
+  @apply opacity-50 scale-95 shadow-lg;
+}
+
+.banner-kanban-item.drag-over {
+  @apply ring-2 ring-primary ring-offset-2 bg-primary/5;
+}
+
+.banner-drag-handle {
+  @apply cursor-move text-muted-foreground hover:text-foreground transition-colors;
+}
+
+.banner-drag-handle:hover {
+  @apply text-primary;
+}
+
+/* Banner card styles */
+.banner-card {
+  @apply transition-all duration-200 hover:shadow-md;
+}
+
+.banner-card:hover {
+  @apply shadow-lg;
+}
+
+.banner-image-thumbnail {
+  @apply relative w-20 h-16 rounded-md overflow-hidden bg-muted;
+}
+
+.banner-status-badge {
+  @apply text-xs font-medium;
+}
+
+.banner-status-badge.active {
+  @apply bg-green-100 text-green-800;
+}
+
+.banner-status-badge.inactive {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.banner-position-indicator {
+  @apply w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary;
+}
+
+/* Banner carousel styles */
+.banner-carousel {
+  @apply relative w-full overflow-hidden rounded-lg;
+}
+
+.banner-carousel-slide {
+  @apply w-full flex-shrink-0 transition-transform duration-500 ease-in-out;
+}
+
+.banner-carousel-controls {
+  @apply absolute top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200;
+}
+
+.banner-carousel-dots {
+  @apply flex justify-center space-x-2 mt-4;
+}
+
+.banner-carousel-dot {
+  @apply w-2 h-2 rounded-full transition-all duration-200 cursor-pointer;
+}
+
+.banner-carousel-dot.active {
+  @apply bg-primary scale-125;
+}
+
+.banner-carousel-dot.inactive {
+  @apply bg-muted-foreground/30 hover:bg-muted-foreground/50;
+}
+
+.banner-carousel-counter {
+  @apply absolute bottom-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded;
+}
+
+/* Banner dialog styles */
+.banner-dialog-content {
+  @apply sm:max-w-[600px];
+}
+
+.banner-form-section {
+  @apply space-y-6;
+}
+
+.banner-image-upload-area {
+  @apply border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors rounded-lg p-6 text-center;
+}
+
+.banner-image-preview {
+  @apply relative w-full h-48 rounded-lg overflow-hidden bg-muted;
+}
+
+/* Mobile-optimized banner styles */
+@media (max-width: 768px) {
+  .banner-kanban-item {
+    @apply p-3;
+  }
+  
+  .banner-image-thumbnail {
+    @apply w-16 h-12;
+  }
+  
+  .banner-carousel-controls {
+    @apply opacity-100; /* Always show on mobile */
+  }
+  
+  .banner-carousel-controls button {
+    @apply w-10 h-10;
+  }
+  
+  .banner-dialog-content {
+    @apply max-w-[95vw] mx-4;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .banner-kanban-item {
+    @apply min-h-[60px];
+  }
+  
+  .banner-drag-handle {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  
+  .banner-carousel-dot {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  
+  .banner-carousel-controls button {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+/* Banner animations */
+@keyframes banner-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes banner-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+.banner-slide-enter {
+  animation: banner-slide-in 0.5s ease-in-out;
+}
+
+.banner-slide-exit {
+  animation: banner-slide-out 0.5s ease-in-out;
+}
+
+/* Banner loading states */
+.banner-loading-skeleton {
+  @apply animate-pulse bg-muted rounded-lg;
+}
+
+.banner-loading-skeleton.image {
+  @apply w-full h-48;
+}
+
+.banner-loading-skeleton.text {
+  @apply h-4 w-3/4;
+}
+
+.banner-loading-skeleton.button {
+  @apply h-10 w-24;
+}
+
+/* Banner error states */
+.banner-error {
+  @apply border-destructive bg-destructive/5 text-destructive;
+}
+
+.banner-error-message {
+  @apply text-sm text-destructive mt-1;
+}
+
+/* Banner success states */
+.banner-success {
+  @apply border-green-500 bg-green-50 text-green-700;
+}
+
+.banner-success-message {
+  @apply text-sm text-green-600 mt-1;
+}
+
+/* High contrast mode for banners */
+@media (prefers-contrast: high) {
+  .banner-kanban-item {
+    @apply border-2 border-gray-900;
+  }
+  
+  .banner-carousel-controls {
+    @apply border-2 border-gray-900;
+  }
+  
+  .banner-carousel-dot {
+    @apply border border-current;
+  }
+}
+
+/* Reduced motion for banners */
+@media (prefers-reduced-motion: reduce) {
+  .banner-carousel-slide {
+    @apply transition-none;
+  }
+  
+  .banner-kanban-item {
+    @apply transition-none;
+  }
+  
+  .banner-slide-enter,
+  .banner-slide-exit {
+    @apply animate-none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
