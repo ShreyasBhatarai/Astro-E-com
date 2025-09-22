@@ -2,6 +2,72 @@ import { prisma } from '@/lib/prisma'
 import { withErrorHandling } from '@/lib/error-handling'
 import { ProductWithDetails, CategoryWithCount, ProductFilters, PaginatedResponse, OptimizedCategory } from '@/types'
 
+// Helper function to generate search variations (including pluralization)
+function generateSearchVariations(term: string): string[] {
+  const variations = [term.toLowerCase()]
+  
+  // Handle common plural/singular conversions
+  const singularRules = [
+    { from: /ies$/, to: 'y' },      // batteries -> battery
+    { from: /ves$/, to: 'f' },      // wolves -> wolf
+    { from: /ves$/, to: 'fe' },     // knives -> knife
+    { from: /s$/, to: '' },         // boards -> board
+  ]
+  
+  const pluralRules = [
+    { from: /y$/, to: 'ies' },      // battery -> batteries  
+    { from: /f$/, to: 'ves' },      // wolf -> wolves
+    { from: /fe$/, to: 'ves' },     // knife -> knives
+    { from: /$/, to: 's' },         // board -> boards
+  ]
+  
+  // Generate singular variations from plural input
+  for (const rule of singularRules) {
+    if (rule.from.test(term)) {
+      const singular = term.replace(rule.from, rule.to)
+      if (singular !== term && singular.length > 2) {
+        variations.push(singular)
+      }
+    }
+  }
+  
+  // Generate plural variations from singular input
+  for (const rule of pluralRules) {
+    if (rule.from.test(term)) {
+      const plural = term.replace(rule.from, rule.to)
+      if (plural !== term) {
+        variations.push(plural)
+      }
+    }
+  }
+  
+  // Add common electronics/tech variations
+  const techVariations: Record<string, string[]> = {
+    'circuit': ['circuits', 'circuitry'],
+    'circuits': ['circuit', 'circuitry'],
+    'board': ['boards', 'pcb', 'pcbs'],
+    'boards': ['board', 'pcb', 'pcbs'],
+    'chip': ['chips', 'ic', 'ics', 'microchip', 'microchips'],
+    'chips': ['chip', 'ic', 'ics', 'microchip', 'microchips'],
+    'battery': ['batteries', 'cell', 'cells'],
+    'batteries': ['battery', 'cell', 'cells'],
+    'led': ['leds', 'light'],
+    'leds': ['led', 'light'],
+    'sensor': ['sensors'],
+    'sensors': ['sensor'],
+    'motor': ['motors'],
+    'motors': ['motor'],
+    'wire': ['wires', 'cable', 'cables'],
+    'wires': ['wire', 'cable', 'cables'],
+  }
+  
+  if (techVariations[term]) {
+    variations.push(...techVariations[term])
+  }
+  
+  return [...new Set(variations)] // Remove duplicates
+}
+
 export async function getProducts(filters: ProductFilters = {}): Promise<PaginatedResponse<ProductWithDetails>> {
   const {
     category,
@@ -38,35 +104,57 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
   if (search) {
     const searchTerms = search.split(' ').filter(term => term.length > 0)
     
-    // Enhanced search with weighted relevance
+    // Generate all possible variations for each search term (including pluralization)
+    const allVariations: string[] = []
+    searchTerms.forEach(term => {
+      const variations = generateSearchVariations(term)
+      allVariations.push(...variations)
+    })
+    
+    // Remove duplicates and filter out very short terms
+    const uniqueVariations = [...new Set(allVariations)].filter(term => term.length > 1)
+    
+    // Enhanced search with weighted relevance and pluralization handling
     where.OR = [
       // High priority: exact matches in name and brand
       { name: { contains: search, mode: 'insensitive' } },
       { brand: { contains: search, mode: 'insensitive' } },
       
-      // Medium priority: individual terms in name
+      // High priority: individual original terms in name
       ...searchTerms.map(term => ({
         name: { contains: term, mode: 'insensitive' }
       })),
       
-      // Medium priority: tags matching
-      { tags: { hasSome: searchTerms } },
+      // High priority: tag variations matching (includes pluralization and case-insensitive)
+      { tags: { hasSome: uniqueVariations.map(v => v.toLowerCase()) } },
+      
+      // Medium priority: individual variations in name (for partial matches)
+      ...uniqueVariations.slice(0, 10).map(variation => ({ // Limit to first 10 variations for performance
+        name: { contains: variation, mode: 'insensitive' }
+      })),
+      
+      // Medium priority: individual variations in brand
+      ...uniqueVariations.slice(0, 5).map(variation => ({ // Limit for performance
+        brand: { contains: variation, mode: 'insensitive' }
+      })),
       
       // Lower priority: description and category
       { description: { contains: search, mode: 'insensitive' } },
       { sku: { contains: search, mode: 'insensitive' } },
       { category: { name: { contains: search, mode: 'insensitive' } } },
       
-      // Individual terms in description
+      // Lower priority: individual terms in description
       ...searchTerms.map(term => ({
         description: { contains: term, mode: 'insensitive' }
       })),
       
-      // Individual terms in tags
+      // Lower priority: tag exact matches for original terms (case-insensitive)
       ...searchTerms.map(term => ({
-        tags: { has: term }
+        tags: { has: term.toLowerCase() }
       }))
     ]
+    
+    console.log(`🔍 Search enhanced: "${search}" -> variations: [${uniqueVariations.slice(0, 10).join(', ')}]`)
   }
 
   if (brand) {

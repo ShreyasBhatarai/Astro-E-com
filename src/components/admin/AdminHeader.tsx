@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Settings, User, LogOut } from 'lucide-react'
+import { Home, LogOut } from 'lucide-react'
 import { NotificationsSheet } from '@/components/header/NotificationsSheet'
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
@@ -25,7 +25,7 @@ export function AdminHeader({ title = 'Admin Dashboard', className }: AdminHeade
   const { data: session } = useSession()
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: '/admin/login' })
+    await signOut({ callbackUrl: '/login' })
   }
 
   const getInitials = (name: string | null) => {
@@ -75,15 +75,9 @@ export function AdminHeader({ title = 'Admin Dashboard', className }: AdminHeade
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/admin/settings" className="flex items-center">
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/admin/settings" className="flex items-center">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
+              <Link href="/" className="flex items-center">
+                <Home className="mr-2 h-4 w-4" />
+                <span>Go to Shop</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

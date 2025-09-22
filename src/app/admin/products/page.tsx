@@ -262,9 +262,19 @@ export default function AdminProductsPage() {
                                   })
                                   if (response.ok) {
                                     fetchProducts()
+                                    toast.success(
+                                      `Product "${product.name}" ${checked ? 'activated' : 'deactivated'} successfully`,
+                                      {
+                                        description: `The product is now ${checked ? 'visible' : 'hidden'} in the shop`,
+                                        duration: 3000
+                                      }
+                                    )
+                                  } else {
+                                    toast.error('Failed to update product status')
                                   }
                                 } catch (error) {
                                   console.error('Error updating product status:', error)
+                                  toast.error('An error occurred while updating product status')
                                 }
                               }}
                             />
@@ -279,20 +289,20 @@ export default function AdminProductsPage() {
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm">
                                   <MoreHorizontal className="h-4 w-4" />
-                                </Button>
+                              </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem asChild>
                                   <Link href={`/admin/products/${product.id}/edit`}>
                                     <Edit className="h-4 w-4 mr-2" />
                                     Edit Product
-                                  </Link>
+                            </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
                                   <Link href={`/products/${product.slug}`} target="_blank">
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Live
-                                  </Link>
+                            </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem

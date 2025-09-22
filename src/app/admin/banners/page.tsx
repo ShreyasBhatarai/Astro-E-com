@@ -134,7 +134,15 @@ export default function AdminBannersPage() {
       const result = await response.json()
       
       if (result.success) {
-        toast.success('Banner status updated')
+        const banner = banners.find(b => b.id === id)
+        const newStatus = !banner?.isActive
+        toast.success(
+          `Banner ${newStatus ? 'activated' : 'deactivated'} successfully`,
+          {
+            description: `The banner is now ${newStatus ? 'visible' : 'hidden'} on the website`,
+            duration: 3000
+          }
+        )
         await fetchBanners()
       } else {
         toast.error(result.error || 'Failed to update banner status')

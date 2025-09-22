@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { Bell, ShoppingCart, User, AlertCircle, CheckCircle, Package, TrendingUp, Dot } from 'lucide-react'
+import { Bell, ShoppingCart, User, AlertCircle, CheckCircle, Package, TrendingUp, Dot, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
@@ -18,10 +18,16 @@ interface NotificationItem {
   metadata?: any
 }
 
-function NotificationsList() {
+interface NotificationsListProps {
+  onCountUpdate?: () => void
+  triggerRefresh?: boolean
+}
+
+function NotificationsList({ onCountUpdate, triggerRefresh }: NotificationsListProps) {
   const [items, setItems] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [markingAllRead, setMarkingAllRead] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [page, setPage] = useState(1)
   const limit = 7
@@ -67,9 +73,20 @@ function NotificationsList() {
     loadNotifications(1)
   }, [])
 
+  // Handle trigger refresh - MUST be called before any early returns
+  useEffect(() => {
+    if (triggerRefresh) {
+      setPage(1)
+      setHasMore(true)
+      loadNotifications(1)
+    }
+  }, [triggerRefresh])
+
   if (loading) {
     return <LoadingSpinner message="Loading notifications..." className="py-8" />
   }
+
+  const hasUnreadNotifications = items.some(item => !item.isRead)
 
   if (items.length === 0) {
     return <div className="p-6 text-sm text-muted-foreground text-center">No notifications</div>
@@ -117,13 +134,59 @@ function NotificationsList() {
           item.id === notificationId ? { ...item, isRead: true } : item
         )
       )
+      // Update the unread count instantly
+      onCountUpdate?.()
     } catch (error) {
       // console.error('Error marking notification as read:', error)
     }
   }
 
+  const markAllAsRead = async () => {
+    setMarkingAllRead(true)
+    try {
+      const res = await fetch('/api/notifications/mark-all-read', { method: 'POST' })
+      if (res.ok) {
+        // Mark all items as read in the local state
+        setItems(prev => 
+          prev.map(item => ({ ...item, isRead: true }))
+        )
+        // Update the unread count instantly
+        onCountUpdate?.()
+      }
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error)
+    } finally {
+      setMarkingAllRead(false)
+    }
+  }
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
+      {/* Read All Button */}
+      {hasUnreadNotifications && (
+        <div className="px-4 pb-2">
+          <Button
+            onClick={markAllAsRead}
+            disabled={markingAllRead}
+            variant="outline"
+            size="sm"
+            className="w-full h-8 text-xs"
+          >
+            {markingAllRead ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1" />
+                Marking all as read...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Mark all as read
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+      
       {items.map(n => (
         <div 
           key={n.id} 
@@ -175,7 +238,14 @@ function NotificationsList() {
             disabled={loadingMore}
             className="w-full"
           >
-            {loadingMore ? 'Loading...' : 'Load More'}
+            {loadingMore ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                Loading...
+              </>
+            ) : (
+              'Load More'
+            )}
           </Button>
         </div>
       )}
@@ -184,23 +254,72 @@ function NotificationsList() {
 }
 
 export function NotificationsSheet() {
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [refreshTrigger, setRefreshTrigger] = useState(false)
+
+  // Fetch unread notification count
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await fetch('/api/notifications/unread-count')
+      if (res.ok) {
+        const data = await res.json()
+        setUnreadCount(data.count || 0)
+      }
+    } catch (error) {
+      console.error('Error fetching unread count:', error)
+    }
+  }
+
+  const handleRefresh = () => {
+    setRefreshTrigger(prev => !prev) // Toggle to trigger refresh
+    fetchUnreadCount()
+  }
+
+  useEffect(() => {
+    fetchUnreadCount()
+    
+    // Optional: Set up polling to update count every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000)
+    
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Notifications">
+        <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
           <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center min-w-[20px]"
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </Badge>
+          )}
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-[400px] flex flex-col">
         <SheetHeader className="pb-4">
-          <SheetTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notifications
-          </SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Notifications
+            </SheetTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              className="h-8 w-8 p-0 shrink-0"
+              title="Refresh notifications"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto">
           <Suspense fallback={<LoadingSpinner message="Loading..." className="py-8" />}>
-            <NotificationsList />
+            <NotificationsList onCountUpdate={fetchUnreadCount} triggerRefresh={refreshTrigger} />
           </Suspense>
         </div>
       </SheetContent>

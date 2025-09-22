@@ -244,7 +244,7 @@ export async function sendOTPEmail(to: string, otp: string, name?: string) {
   }
 }
 
-// Send Order Status Email function  
+// Send Order Status Email function
 export async function sendOrderStatusEmail(data: {
   userEmail: string
   userName: string

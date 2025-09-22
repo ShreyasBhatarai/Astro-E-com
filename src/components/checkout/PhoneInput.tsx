@@ -41,10 +41,9 @@ export function PhoneInput({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value
-    // Allow only numbers and + at the beginning
-    const sanitized = inputValue.replace(/[^\d+]/g, '')
-    const normalized = sanitized // Remove normalizeNepalPhone call
-    onChange(normalized)
+    // Allow only numbers, limit to 10 digits
+    const sanitized = inputValue.replace(/[^\d]/g, '').slice(0, 10)
+    onChange(sanitized)
   }
 
   const handleBlur = () => {
@@ -70,9 +69,9 @@ export function PhoneInput({
     }
     
     if (isValid === true) {
-      return 'Valid Nepal phone number'
+      return 'Valid phone number (10 digits)'
     } else if (isValid === false) {
-      return 'Please enter a valid Nepal phone number (e.g., +977-98XXXXXXXX or 98XXXXXXXX)'
+      return 'Please enter exactly 10 digits (e.g., 9812345678)'
     }
     return null
   }
@@ -86,7 +85,7 @@ export function PhoneInput({
         <Input
           id="phone"
           type="tel"
-          placeholder="+977-98XXXXXXXX or 98XXXXXXXX"
+          placeholder="98XXXXXXXX (10 digits)"
           value={value}
           onChange={handleChange}
           onBlur={handleBlur}

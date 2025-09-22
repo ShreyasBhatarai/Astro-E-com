@@ -45,9 +45,17 @@ const productSchema = z.object({
 
 type ProductFormData = z.infer<typeof productSchema>
 
+// Serialized product type for client components (Decimal → number)
+type SerializedProduct = Omit<Product, 'price' | 'originalPrice' | 'weight'> & {
+  price: number
+  originalPrice: number | null
+  weight: number | null
+  category: { id: string; name: string; slug: string }
+}
+
 interface ProductFormProps {
   mode: 'create' | 'edit'
-  product?: Product & { category: { id: string; name: string; slug: string } }
+  product?: SerializedProduct
 }
 
 export function ProductForm({ mode, product }: ProductFormProps) {

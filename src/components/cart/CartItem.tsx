@@ -104,7 +104,7 @@ export function CartItem({ item, className }: CartItemProps) {
             </div>
 
             {/* Stock Warning */}
-            {item.product.stock <= 5 && item.product.stock > 0 && (
+            {item.product.stock <= 10 && item.product.stock > 0 && (
               <p className="text-xs text-orange-600 mt-2">
                 Only {item.product.stock} left in stock
               </p>

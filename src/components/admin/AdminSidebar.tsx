@@ -41,7 +41,7 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: '/admin/login' })
+    await signOut({ callbackUrl: '/login' })
   }
 
   const SidebarContent = () => (

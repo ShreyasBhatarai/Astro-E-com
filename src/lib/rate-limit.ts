@@ -101,10 +101,10 @@ export const createAuthRateLimit = () => rateLimit({
   maxRequests: 5, // 5 attempts
   windowMs: 15 * 60 * 1000, // per 15 minutes
   keyGenerator: (req) => {
-    // For auth routes, use IP + email/username if available
-    const body = req.body as any
-    const identifier = body?.email || body?.username || getClientIP(req)
-    return `auth-${identifier}`
+    // For auth routes, use IP-based limiting
+    // Body parsing should be done in the route handler, not here
+    const ip = getClientIP(req)
+    return `auth-${ip}`
   }
 })
 

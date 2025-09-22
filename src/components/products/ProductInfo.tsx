@@ -162,7 +162,7 @@ export function ProductInfo({ product, className }: ProductInfoProps) {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
 
-  const isLowStock = product.stock > 0 && product.stock <= 5
+  const isLowStock = product.stock > 0 && product.stock <= 10
   const isOutOfStock = product.stock === 0
 
   return (
@@ -175,7 +175,7 @@ export function ProductInfo({ product, className }: ProductInfoProps) {
       </div>
 
       {/* Product Name */}
-      <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
+      <h1 className="text-1xl lg:text-3xl font-medium text-gray-900 leading-tight">
         {product.name}
       </h1>
 
@@ -203,11 +203,11 @@ export function ProductInfo({ product, className }: ProductInfoProps) {
       {/* Price */}
       <div className="space-y-2">
         <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-bold text-black">
+          <span className="text-2xl font-normal text-black">
             Rs. {product.price}
           </span>
           {product.originalPrice && product.originalPrice > product.price && (
-            <span className="text-xl text-gray-500 line-through">
+            <span className="text-lg text-gray-500 line-through">
               Rs. {product.originalPrice}
             </span>
           )}

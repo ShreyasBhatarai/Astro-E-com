@@ -55,33 +55,45 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <div className="container mx-auto px-4 py-6">
         {/* Breadcrumb */}
         <nav className="mb-8">
-          <ol className="flex items-center space-x-2 text-sm text-gray-500">
-            <li>
-              <Link href="/" className="hover:text-astro-primary transition-colors">
-                Home
-              </Link>
-            </li>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
-            <li>
-              <Link href="/products" className="hover:text-astro-primary transition-colors">
-               Products
-              </Link>
-            </li>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
-            <li>
-              <Link 
-                href={`/products?category=${product.category?.slug}`}
-                className="hover:text-astro-primary transition-colors"
-              >
-                {product.category?.name}
-              </Link>
-            </li>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
-            <li className="text-gray-900 font-medium">
-              {product.name}
-            </li>
-          </ol>
-        </nav>
+  <ol className="flex items-center space-x-2 text-sm text-gray-500">
+    <li className="shrink-0">
+      <Link href="/" className="hover:text-astro-primary transition-colors">
+        Home
+      </Link>
+    </li>
+    <ChevronRight className="h-4 w-4 text-gray-400 shrink-0" />
+
+    <li className="shrink-0">
+      <Link href="/products" className="hover:text-astro-primary transition-colors">
+        Products
+      </Link>
+    </li>
+    <ChevronRight className="h-4 w-4 text-gray-400 shrink-0" />
+
+    <li className="shrink-0">
+      <Link
+        href={`/products?category=${product.category?.slug}`}
+        className="hover:text-astro-primary transition-colors"
+      >
+        {product.category?.name}
+      </Link>
+    </li>
+    <ChevronRight className="h-4 w-4 text-gray-400 shrink-0" />
+
+    {/* Truncated product name */}
+    <li
+      className="
+        text-gray-900 font-medium truncate 
+        max-w-[140px] sm:max-w-[200px] md:max-w-[300px] 
+        overflow-hidden whitespace-nowrap
+      "
+      title={product.name} // Tooltip shows full name on hover
+    >
+      {product.name}
+    </li>
+  </ol>
+</nav>
+
 
         {/* Product Details */}
         <div className="lg:grid lg:grid-cols-2 lg:gap-12 space-y-8 lg:space-y-0 mb-16">

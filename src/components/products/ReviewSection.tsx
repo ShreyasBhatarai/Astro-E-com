@@ -29,6 +29,19 @@ export function ReviewSection({ reviews, averageRating, totalReviews, productId,
     window.location.reload()
   }
 
+  // Calculate adaptive scroll area height based on number of reviews
+  const getScrollAreaHeight = () => {
+    const reviewCount = displayedReviews.length
+    const maxHeight = 400 // Maximum height in pixels
+    const minHeight = 120 // Minimum height for empty state
+    const reviewCardHeight = 120 // Approximate height per review card
+    
+    if (reviewCount === 0) return minHeight
+    
+    const calculatedHeight = reviewCount * reviewCardHeight
+    return Math.min(calculatedHeight, maxHeight)
+  }
+
   // Calculate rating distribution
   const ratingDistribution = [5, 4, 3, 2, 1].map(rating => ({
     rating,
@@ -129,7 +142,10 @@ export function ReviewSection({ reviews, averageRating, totalReviews, productId,
           <h3 className="text-lg font-semibold">Reviews ({totalReviews})</h3>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[400px] pr-4">
+          <ScrollArea 
+            className="pr-4" 
+            style={{ height: `${getScrollAreaHeight()}px` }}
+          >
             <div className="space-y-4">
               {displayedReviews.map((review) => (
                 <div key={review.id} className="border-b border-gray-100 last:border-b-0 pb-4 last:pb-0">

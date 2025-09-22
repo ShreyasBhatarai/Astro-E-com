@@ -93,13 +93,52 @@ export const authOptions: NextAuthOptions = {
       }
       return token
     },
-    async session({ session, token }) {
+    async session({ session, token, trigger, newSession }) {
       if (token) {
-        session.user.id = token.id as string
-        session.user.role = token.role as UserRole
-        session.user.name = token.name as string
-        session.user.email = token.email as string
-        session.user.phone = token.phone as string
+        // If this is a session update (triggered by update()), fetch fresh user data
+        if (trigger === 'update') {
+          try {
+            const freshUser = await prisma.user.findUnique({
+              where: { id: token.id as string },
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                phone: true,
+              }
+            })
+            
+            if (freshUser) {
+              session.user.id = freshUser.id
+              session.user.role = freshUser.role
+              session.user.name = freshUser.name
+              session.user.email = freshUser.email
+              session.user.phone = freshUser.phone
+              
+              // Also update the token with fresh data for next time
+              token.name = freshUser.name
+              token.email = freshUser.email
+              token.phone = freshUser.phone
+              token.role = freshUser.role
+            }
+          } catch (error) {
+            console.error('Error fetching fresh user data for session:', error)
+            // Fallback to token data if database fetch fails
+            session.user.id = token.id as string
+            session.user.role = token.role as UserRole
+            session.user.name = token.name as string
+            session.user.email = token.email as string
+            session.user.phone = token.phone as string
+          }
+        } else {
+          // Normal session, use token data
+          session.user.id = token.id as string
+          session.user.role = token.role as UserRole
+          session.user.name = token.name as string
+          session.user.email = token.email as string
+          session.user.phone = token.phone as string
+        }
       }
       return session
     },

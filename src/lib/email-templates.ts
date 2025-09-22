@@ -125,8 +125,8 @@ export function getOTPEmailTemplate(otp: string, name?: string): string {
                 >
                   ${otp}
                 </p>
-              </div>
-            </div>
+        </div>
+      </div>
 
             <p
               style="
@@ -215,7 +215,7 @@ export function getOTPEmailTemplate(otp: string, name?: string): string {
                   alt="LinkedIn"
                   src="https://cdn-icons-png.flaticon.com/512/174/174857.png"
               /></a>
-            </div>
+        </div>
             <p style="margin: 0; margin-top: 16px; color: #434343; font-size: 12px;">
               Copyright © ${new Date().getFullYear()} AstroNova Foundation. All rights reserved.
             </p>
@@ -389,7 +389,7 @@ export function getOrderStatusEmailTemplate(data: {
                     "
                   >
                     ${statusEmojis[data.status as keyof typeof statusEmojis] || '📋'}
-                  </div>
+      </div>
                   
                   <div
                     style="
@@ -406,13 +406,13 @@ export function getOrderStatusEmailTemplate(data: {
                     "
                   >
                     ${data.status}
-                  </div>
+        </div>
                   
                   <div style="margin-top: 15px; font-size: 12px; color: #6b7280;">
                     <div><strong>Order:</strong> #${data.orderNumber}</div>
                     <div style="margin-top: 5px;"><strong>Total:</strong> Rs. ${data.orderTotal.toLocaleString()}</div>
-                  </div>
-                </div>
+        </div>
+      </div>
 
                 <div
                   style="
@@ -435,9 +435,9 @@ export function getOrderStatusEmailTemplate(data: {
                   >
                     Track Your Order
                   </a>
-                </div>
-              </div>
-            </div>
+        </div>
+        </div>
+      </div>
 
             <p
               style="
@@ -525,7 +525,7 @@ export function getOrderStatusEmailTemplate(data: {
                   alt="LinkedIn"
                   src="https://cdn-icons-png.flaticon.com/512/174/174857.png"
               /></a>
-            </div>
+        </div>
             <p style="margin: 0; margin-top: 16px; color: #434343; font-size: 12px;">
               Copyright © ${new Date().getFullYear()} AstroNova Foundation. All rights reserved.
             </p>

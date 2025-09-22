@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation'
 import { useWishlist } from '@/contexts/WishlistContext'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { CartIcon } from '@/components/cart/CartIcon'
+import { NotificationsSheet } from '@/components/header/NotificationsSheet'
 import Image from 'next/image'
 import { signOut } from 'next-auth/react'
 
@@ -110,11 +111,22 @@ export function ShopHeader() {
       <div className="container mx-auto px-4">
         {/* Mobile Layout - Two Layers */}
         <div className="block lg:hidden">
-          {/* Top Layer - Logo and Icons */}
+          {/* Top Layer - Logo/Name and Icons */}
           <div className="flex h-14 items-center justify-between">
-            {/* Logo Only */}
-            <Link href="/" className="flex items-center">
-              <Image src="/logo.webp" alt="Astro E-com" width={80} height={80} />
+            {/* Logo + Name (responsive) */}
+            <Link href="/" className="flex items-center space-x-2">
+              {/* Logo - hidden on very small screens */}
+              <Image 
+                src="/logo.webp" 
+                alt="Astro E-com" 
+                width={60} 
+                height={60} 
+                className="hidden min-[400px]:block"
+              />
+              {/* Brand Name - always visible on mobile */}
+              <span className="text-lg font-normal text-gray-900">
+                Astro <span className="text-primary font-extrabold">E-Com</span>
+              </span>
             </Link>
 
             {/* Icons Row */}
@@ -139,6 +151,7 @@ export function ShopHeader() {
                   </Badge>
                 )}
               </Button>
+
 
             {/* Shopping Cart */}
             <CartIcon />
@@ -183,9 +196,7 @@ export function ShopHeader() {
                       <DropdownMenuItem asChild>
                         <Link href="/orders" className="font-normal">My Orders</Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/wishlist" className="font-normal">Wishlist</Link>
-                      </DropdownMenuItem>
+                   
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
                         onClick={() => signOut()}
@@ -345,6 +356,7 @@ export function ShopHeader() {
               )}
             </Button>
 
+
             {/* Shopping Cart */}
             <CartIcon />
 
@@ -387,9 +399,7 @@ export function ShopHeader() {
                     <DropdownMenuItem asChild>
                       <Link href="/orders" className="font-normal">My Orders</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/wishlist" className="font-normal">Wishlist</Link>
-                    </DropdownMenuItem>
+               
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       onClick={() => signOut()}

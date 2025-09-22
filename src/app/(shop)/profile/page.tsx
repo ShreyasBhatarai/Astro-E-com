@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageLoader } from '@/components/ui/loader'
+import { PhoneInput } from '@/components/checkout/PhoneInput'
 
 // Schema for profile update
 const profileSchema = z.object({
@@ -35,12 +36,16 @@ type ProfileFormData = z.infer<typeof profileSchema>
 type PasswordFormData = z.infer<typeof passwordSchema>
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession()
+  const { data: session, status, update } = useSession()
   const [isSavingProfile, setIsSavingProfile] = useState(false)
   const [isSavingPassword, setIsSavingPassword] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [emailVerificationRequired, setEmailVerificationRequired] = useState(false)
+  const [otp, setOtp] = useState('')
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState('')
 
   // Profile form
   const profileForm = useForm<ProfileFormData>({
@@ -96,14 +101,92 @@ export default function ProfilePage() {
         body: JSON.stringify(data)
       })
       
-      if (!res.ok) throw new Error('Failed to update profile')
+      const result = await res.json()
       
-      toast.success('Profile updated successfully!')
+      if (!res.ok) {
+        toast.error(result.error || 'Failed to update profile')
+        return
+      }
+      
+      if (result.requiresEmailVerification) {
+        setEmailVerificationRequired(true)
+        setPendingEmail(data.email)
+        toast.info('Verification email sent to your new email address', {
+          description: 'Please check your email and enter the verification code below.',
+          duration: 6000
+        })
+      } else {
+        toast.success(result.message || 'Profile updated successfully!')
+        
+        // Sign out user to ensure fresh login with updated details
+        setTimeout(async () => {
+          await signOut({ callbackUrl: '/login?message=profile-updated' })
+        }, 1500) // Give time for success message to be seen
+      }
     } catch (error) {
       // console.error('Profile update error:', error)
       toast.error('Could not update profile. Please try again.')
     } finally {
       setIsSavingProfile(false)
+    }
+  }
+
+  const handleOtpVerification = async () => {
+    if (!otp || otp.length !== 6) {
+      toast.error('Please enter a valid 6-digit verification code')
+      return
+    }
+
+    setIsVerifyingOtp(true)
+    try {
+      const res = await fetch('/api/profile/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ otp })
+      })
+
+      const result = await res.json()
+
+      if (!res.ok) {
+        toast.error(result.error || 'Failed to verify email')
+        return
+      }
+
+      toast.success(result.message || 'Email address updated successfully!')
+      setEmailVerificationRequired(false)
+      setOtp('')
+      setPendingEmail('')
+      
+      // Sign out user to ensure fresh login with updated email
+      setTimeout(async () => {
+        await signOut({ callbackUrl: '/login?message=email-updated' })
+      }, 1500) // Give time for success message to be seen
+    } catch (error) {
+      console.error('OTP verification error:', error)
+      toast.error('Failed to verify email. Please try again.')
+    } finally {
+      setIsVerifyingOtp(false)
+    }
+  }
+
+  const handleResendOtp = async () => {
+    try {
+      const res = await fetch('/api/profile/verify-email', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      const result = await res.json()
+
+      if (!res.ok) {
+        toast.error(result.error || 'Failed to resend verification code')
+        return
+      }
+
+      toast.success(result.message || 'New verification code sent!')
+    } catch (error) {
+      console.error('Resend OTP error:', error)
+      toast.error('Failed to resend verification code. Please try again.')
     }
   }
 
@@ -186,18 +269,11 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Phone Number
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="Enter your phone number"
-                  {...profileForm.register('phone')}
-                />
-              </div>
+              <PhoneInput
+                value={profileForm.watch('phone') || ''}
+                onChange={(value) => profileForm.setValue('phone', value)}
+                required={false}
+              />
 
               <Button 
                 type="submit" 
@@ -216,6 +292,74 @@ export default function ProfilePage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Email Verification */}
+        {emailVerificationRequired && (
+          <Card className="border-yellow-200 bg-yellow-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5 text-yellow-600" />
+                Email Verification Required
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                We&apos;ve sent a 6-digit verification code to <strong>{pendingEmail}</strong>. 
+                Please enter the code below to complete your email update.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp">Verification Code</Label>
+                <Input
+                  id="otp"
+                  type="text"
+                  placeholder="Enter 6-digit code"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                  className="text-center text-lg tracking-widest"
+                />
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={handleOtpVerification}
+                  disabled={isVerifyingOtp || otp.length !== 6}
+                  className="flex-1 bg-astro-primary hover:bg-astro-primary-hover"
+                >
+                  {isVerifyingOtp ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify Email'
+                  )}
+                </Button>
+                
+                <Button
+                  onClick={handleResendOtp}
+                  variant="outline"
+                  type="button"
+                  className="flex-1"
+                >
+                  Resend Code
+                </Button>
+              </div>
+              
+              <Button
+                onClick={() => {
+                  setEmailVerificationRequired(false)
+                  setOtp('')
+                  setPendingEmail('')
+                }}
+                variant="ghost"
+                className="w-full text-sm"
+              >
+                Cancel Email Change
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Password Change */}
       <Card>

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label'
 import { Loader2 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
-import { toast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { CategoryWithCount } from '@/types'
 import Image from 'next/image'
 
@@ -45,19 +45,11 @@ export function CategoriesManagement() {
         const data = await response.json()
         setCategories(data.data || [])
       } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch categories',
-          variant: 'destructive'
-        })
+        toast.error('Failed to fetch categories')
       }
     } catch (error) {
       // console.error('Error fetching categories:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to connect to server',
-        variant: 'destructive'
-      })
+      toast.error('Failed to connect to server')
     } finally {
       setLoading(false)
     }
@@ -69,21 +61,13 @@ export function CategoriesManagement() {
 
     // Validation
     if (!formData.name.trim()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Category name is required',
-        variant: 'destructive'
-      })
+      toast.error('Category name is required')
       setIsSubmitting(false)
       return
     }
 
     if (!formData.image.trim()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Category image is required',
-        variant: 'destructive'
-      })
+      toast.error('Category image is required')
       setIsSubmitting(false)
       return
     }
@@ -104,10 +88,7 @@ export function CategoriesManagement() {
       })
 
       if (response.ok) {
-        toast({
-          title: 'Success',
-          description: `Category ${editingCategory ? 'updated' : 'created'} successfully`
-        })
+        toast.success(`Category ${editingCategory ? 'updated' : 'created'} successfully`)
         
         setIsAddDialogOpen(false)
         setEditingCategory(null)
@@ -115,19 +96,11 @@ export function CategoriesManagement() {
         fetchCategories()
       } else {
         const errorData = await response.json()
-        toast({
-          title: 'Error',
-          description: errorData.message || 'Failed to save category',
-          variant: 'destructive'
-        })
+        toast.error(errorData.message || 'Failed to save category')
       }
     } catch (error) {
       // console.error('Error saving category:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to save category',
-        variant: 'destructive'
-      })
+      toast.error('Failed to save category')
     } finally {
       setIsSubmitting(false)
     }
@@ -142,25 +115,14 @@ export function CategoriesManagement() {
       })
 
       if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Category deleted successfully'
-        })
+        toast.success('Category deleted successfully')
         fetchCategories()
       } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to delete category',
-          variant: 'destructive'
-        })
+      toast.error('Failed to delete category')
       }
     } catch (error) {
       // console.error('Error deleting category:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to delete category',
-        variant: 'destructive'
-      })
+      toast.error('Failed to delete category')
     }
   }
 
@@ -207,10 +169,10 @@ export function CategoriesManagement() {
       if (!res.ok) throw new Error('Upload failed')
       const data = await res.json()
       setFormData(prev => ({ ...prev, image: data.secure_url }))
-      toast({ title: 'Image uploaded' })
+      toast.success('Image uploaded')
     } catch (err) {
       // console.error(err)
-      toast({ title: 'Upload failed', description: 'Could not upload image', variant: 'destructive' })
+      toast.error('Could not upload image')
     }
   }
 
@@ -380,7 +342,36 @@ export function CategoriesManagement() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={category.isActive}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            const response = await fetch(`/api/admin/categories/${category.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ isActive: checked })
+                            })
+                            if (response.ok) {
+                              toast.success(
+                                `Category "${category.name}" ${checked ? 'activated' : 'deactivated'} successfully`,
+                                {
+                                  description: `The category is now ${checked ? 'visible' : 'hidden'} in the shop`,
+                                  duration: 3000
+                                }
+                              )
+                              fetchCategories()
+                            } else {
+                              toast.error('Failed to update category status')
+                            }
+                          } catch (error) {
+                            console.error('Error updating category status:', error)
+                            toast.error('An error occurred while updating category status')
+                          }
+                        }}
+                      />
+                    </div>
                     <Button
                       variant="outline"
                       size="icon"

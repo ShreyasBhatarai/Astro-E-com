@@ -21,7 +21,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
-  const [isAddingToWishlist, setIsAddingToWishlist] = useState(false)
+
   
   const discountPercentage = product.originalPrice && product.originalPrice > product.price
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
@@ -53,8 +53,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
       router.push(`/login?callbackUrl=${encodeURIComponent(window.location.href)}`)
       return
     }
-    
-    setIsAddingToWishlist(true)
+
     try {
       if (isProductInWishlist) {
         const success = await removeFromWishlist(product.id)
@@ -73,9 +72,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
       }
     } catch (error) {
       toast.error('Something went wrong')
-    } finally {
-      setIsAddingToWishlist(false)
-    }
+    } 
   }
 
   return (

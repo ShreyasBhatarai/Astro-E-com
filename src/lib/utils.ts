@@ -31,9 +31,9 @@ export function generateOrderNumber(): string {
 }
 
 export function validateNepalPhone(phone: string): boolean {
-  // Nepal phone number validation (mobile: 98XXXXXXXX, landline: 01XXXXXXX, etc.)
-  const nepalPhoneRegex = /^(\+977[-\s]?)?(98|97|96|95|94|93|92|91|90|86|85|84|83|82|81|80|01|02|03|04|05|06|07|08|09)\d{7,8}$/
-  return nepalPhoneRegex.test(phone.replace(/[-\s]/g, ''))
+  // Exactly 10 digits validation (e.g., 9812345678)
+  const cleanPhone = phone.replace(/[^\d]/g, '') // Remove all non-digits
+  return cleanPhone.length === 10 && /^\d{10}$/.test(cleanPhone)
 }
 
 export function validateOrderStatusTransition(currentStatus: string, newStatus: string): boolean {

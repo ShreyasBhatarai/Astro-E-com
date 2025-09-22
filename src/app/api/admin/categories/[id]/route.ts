@@ -103,6 +103,111 @@ export async function PUT(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session || session.user.role !== UserRole.ADMIN) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' } as AdminApiResponse,
+        { status: 401 }
+      )
+    }
+
+    const resolvedParams = await params
+    const categoryId = resolvedParams.id
+    const body = await request.json()
+
+    // For PATCH, we only update the fields that are provided
+    const updateData: any = {}
+    
+    if (body.hasOwnProperty('isActive')) {
+      updateData.isActive = body.isActive
+    }
+    
+    if (body.hasOwnProperty('name')) {
+      if (!body.name) {
+        return NextResponse.json(
+          { success: false, error: 'Category name cannot be empty' } as AdminApiResponse,
+          { status: 400 }
+        )
+      }
+      
+      // Check for duplicate name if name is being updated
+      const duplicateCategory = await prisma.category.findFirst({
+        where: {
+          name: {
+            equals: body.name,
+            mode: 'insensitive'
+          },
+          NOT: {
+            id: categoryId
+          }
+        }
+      })
+
+      if (duplicateCategory) {
+        return NextResponse.json(
+          { success: false, error: 'Category with this name already exists' } as AdminApiResponse,
+          { status: 400 }
+        )
+      }
+
+      updateData.name = body.name
+      // Generate new slug when name changes
+      updateData.slug = body.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+    }
+    
+    if (body.hasOwnProperty('image')) {
+      updateData.image = body.image || null
+    }
+
+    // Check if category exists
+    const existingCategory = await prisma.category.findUnique({
+      where: { id: categoryId }
+    })
+
+    if (!existingCategory) {
+      return NextResponse.json(
+        { success: false, error: 'Category not found' } as AdminApiResponse,
+        { status: 404 }
+      )
+    }
+
+    // Update category with only the provided fields
+    const updatedCategory = await prisma.category.update({
+      where: { id: categoryId },
+      data: updateData,
+      include: {
+        _count: {
+          select: {
+            products: true
+          }
+        }
+      }
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: updatedCategory,
+      message: 'Category updated successfully'
+    } as AdminApiResponse)
+
+  } catch (error) {
+    console.error('Error updating category:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to update category' } as AdminApiResponse,
+      { status: 500 }
+    )
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
