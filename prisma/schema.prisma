@@ -83,7 +83,7 @@ model Product {
   images      String[]
   categoryId  String
   brand       String
-  weight      Decimal @db.Decimal(8, 2)
+  weight      Decimal? @db.Decimal(8, 2)
   dimensions  String?
   specifications Json?
   isActive    Boolean  @default(true)
