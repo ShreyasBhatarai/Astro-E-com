@@ -1,11 +1,12 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules'
+import { Navigation, Pagination, Autoplay } from 'swiper/modules'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { BannerSlide } from './BannerSlide'
 import { CarouselBanner } from '@/types'
+import type { Swiper as SwiperType } from 'swiper'
 
 // Import Swiper styles
 import 'swiper/css'
@@ -31,18 +32,7 @@ export function BannerCarousel({
   showDots = true,
   className = ''
 }: BannerCarouselProps) {
-  const prevRef = useRef<HTMLButtonElement>(null)
-  const nextRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    // Initialize navigation after swiper is mounted
-    if (prevRef.current && nextRef.current) {
-      const swiper = (prevRef.current.closest('.swiper') as any)?.swiper
-      if (swiper && swiper.navigation) {
-        swiper.navigation.update()
-      }
-    }
-  }, [])
+  const [swiperInstance, setSwiperInstance] = useState<SwiperType | null>(null)
 
 
   if (banners.length === 0) {
@@ -65,10 +55,8 @@ export function BannerCarousel({
         modules={[Navigation, Pagination, Autoplay]}
         spaceBetween={0}
         slidesPerView={1}
-        navigation={{
-          prevEl: prevRef.current,
-          nextEl: nextRef.current,
-        }}
+        onSwiper={setSwiperInstance}
+        navigation={false}
         pagination={{
           clickable: true,
           renderBullet: function (index, className) {
@@ -99,19 +87,19 @@ export function BannerCarousel({
       </Swiper>
 
       {/* Custom Navigation Controls */}
-      {showControls && banners.length > 1 && (
+      {showControls && banners.length > 1 && swiperInstance && (
         <>
           <button
-            ref={prevRef}
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white border-none shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm hover:scale-110 w-10 h-10 rounded-full flex items-center justify-center z-10"
+            onClick={() => swiperInstance.slidePrev()}
+            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white border-none shadow-2xl md:opacity-0 group-hover:md:opacity-100 transition-all duration-300 backdrop-blur-sm hover:scale-110 w-10 h-10 rounded-full items-center justify-center z-10"
             aria-label="Previous banner"
           >
             <ChevronLeft className="h-5 w-5 text-gray-700" />
           </button>
 
           <button
-            ref={nextRef}
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white border-none shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm hover:scale-110 w-10 h-10 rounded-full flex items-center justify-center z-10"
+            onClick={() => swiperInstance.slideNext()}
+            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white border-none shadow-2xl md:opacity-0 group-hover:md:opacity-100 transition-all duration-300 backdrop-blur-sm hover:scale-110 w-10 h-10 rounded-full items-center justify-center z-10"
             aria-label="Next banner"
           >
             <ChevronRight className="h-5 w-5 text-gray-700" />

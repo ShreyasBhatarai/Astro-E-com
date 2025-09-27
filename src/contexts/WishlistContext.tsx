@@ -11,11 +11,13 @@ interface WishlistContextType {
   wishlistIds: string[]
   wishlistCount: number
   isLoading: boolean
+  isAuthenticated: boolean
   addToWishlist: (productId: string) => Promise<boolean>
   removeFromWishlist: (productId: string) => Promise<boolean>
   isInWishlist: (productId: string) => boolean
   clearWishlist: () => Promise<boolean>
   syncGuestWishlist: () => Promise<void>
+  refreshWishlist: () => Promise<void>
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined)
@@ -65,7 +67,7 @@ export function WishlistProvider({ children, initialWishlist = [] }: Omit<Wishli
     
     setIsLoading(true)
     try {
-      const response = await fetch('/api/wishlist')
+      const response = await fetch(`/api/wishlist?_=${Date.now()}`,{ cache: 'no-store' })
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
@@ -84,7 +86,7 @@ export function WishlistProvider({ children, initialWishlist = [] }: Omit<Wishli
     if (!userId) return
     
     try {
-      const response = await fetch('/api/wishlist?countOnly=true')
+      const response = await fetch(`/api/wishlist?countOnly=true&_=${Date.now()}`, { cache: 'no-store' })
       if (response.ok) {
         const data = await response.json()
         if (data.success && data.data) {
@@ -249,11 +251,13 @@ export function WishlistProvider({ children, initialWishlist = [] }: Omit<Wishli
     wishlistIds,
     wishlistCount,
     isLoading,
+    isAuthenticated: Boolean(userId),
     addToWishlist,
     removeFromWishlist,
     isInWishlist,
     clearWishlist,
     syncGuestWishlist,
+    refreshWishlist: fetchUserWishlist,
   }
 
   return (

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { sendOrderStatusEmail } from '@/lib/email'
 
 export async function POST(
   request: NextRequest,
@@ -46,6 +47,7 @@ export async function POST(
         updatedAt: new Date()
       },
       include: {
+        user: { select: { email: true, name: true } },
         orderItems: {
           include: {
             product: {
@@ -68,13 +70,29 @@ export async function POST(
         type: 'ORDER_STATUS_CHANGED',
         title: 'Order Cancelled',
         message: `Your order ${orderNumber} has been cancelled successfully.`,
-        metadata: { 
-          orderNumber: orderNumber, 
+        metadata: {
+          orderNumber: orderNumber,
           orderId: order.id,
           status: 'CANCELLED'
         }
       }
     })
+
+    // Send email to user including reason
+    if (updatedOrder.user?.email) {
+      try {
+        await sendOrderStatusEmail({
+          userEmail: updatedOrder.user.email,
+          userName: updatedOrder.shippingName || updatedOrder.user.name || 'Customer',
+          orderNumber: updatedOrder.orderNumber,
+          status: 'CANCELLED',
+          orderTotal: Number(updatedOrder.total),
+          reason: reason || undefined
+        })
+      } catch (e) {
+        // ignore email errors
+      }
+    }
 
     return NextResponse.json({
       success: true,

@@ -17,10 +17,11 @@ import { Trash2, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 
 // Serialized product type for client components (Decimal → number)
-type SerializedProduct = Omit<Product, 'price' | 'originalPrice' | 'weight'> & {
+type SerializedProduct = Omit<Product, 'price' | 'originalPrice' | 'costPrice' | 'weight'> & {
   price: number
   originalPrice: number | null
   weight: number | null
+  costPrice: number | null
 }
 
 interface DeleteProductDialogProps {

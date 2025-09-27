@@ -58,11 +58,12 @@ export async function getDashboardMetrics(): Promise<AdminDashboardMetrics> {
             ...item,
             price: Number(item.price),
             product: {
-              ...item.product,
+              id: item.product.id,
+              name: item.product.name,
               price: Number(item.product.price),
-              originalPrice: item.product.originalPrice ? Number(item.product.originalPrice) : null,
-              weight: item.product.weight ? Number(item.product.weight) : null,
-              // costPrice field not available
+              images: item.product.images,
+              slug: (item.product as any).slug,
+              stock: item.product.stock
             }
           }))
         }))
@@ -164,11 +165,12 @@ export async function getDashboardMetrics(): Promise<AdminDashboardMetrics> {
               
               return {
                 product: {
-                  ...product,
+                  id: product.id,
+                  name: product.name,
                   price: Number(product.price),
-                  originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
-                  weight: product.weight ? Number(product.weight) : null,
-                  reviews: undefined // Remove reviews array from response
+                  images: product.images,
+                  slug: product.slug,
+                  stock: product.stock
                 },
                 totalSold: item._sum.quantity || 0,
                 revenue: Number(item._sum.price || 0),

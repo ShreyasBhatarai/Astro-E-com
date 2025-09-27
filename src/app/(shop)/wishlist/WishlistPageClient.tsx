@@ -10,33 +10,53 @@ import { ProductCard } from '@/components/products/ProductCard'
 import Link from 'next/link'
 
 export function WishlistPageClient() {
-  const { wishlist, removeFromWishlist, isLoading } = useWishlist()
+  const { wishlist, wishlistIds, isLoading, isAuthenticated, refreshWishlist } = useWishlist()
   const [localWishlist, setLocalWishlist] = useState<ProductWithDetails[]>([])
   const [fetchingGuest, setFetchingGuest] = useState(false)
 
-  // For guest users, we need to fetch product details for localStorage IDs
+  // For guest users only, fetch product details from localStorage IDs
   useEffect(() => {
+    if (isAuthenticated) {
+      // Ensure guest state is cleared when user is logged in
+      setLocalWishlist([])
+      setFetchingGuest(false)
+      return
+    }
+
     const fetchGuestWishlistProducts = async () => {
       setFetchingGuest(true)
       const guestIds = JSON.parse(localStorage.getItem('guest-wishlist') || '[]')
       if (guestIds.length > 0) {
         try {
-          const response = await fetch(`/api/products?ids=${guestIds.join(',')}`)
+          const response = await fetch(`/api/products?ids=${guestIds.join(',')}&_=${Date.now()}`,{ cache: 'no-store' })
           if (response.ok) {
             const data = await response.json()
             setLocalWishlist(data.data || [])
+          } else {
+            setLocalWishlist([])
           }
         } catch (error) {
-          // console.error('Error fetching guest wishlist products:', error)
+          setLocalWishlist([])
         }
+      } else {
+        setLocalWishlist([])
       }
       setFetchingGuest(false)
     }
 
-    if (wishlist.length === 0) {
+    // Only for guests
+    if (!isAuthenticated && wishlist.length === 0) {
       fetchGuestWishlistProducts()
     }
-  }, [wishlist.length])
+  }, [isAuthenticated, wishlist.length, wishlistIds.length])
+
+  // Always refresh authenticated wishlist on each visit/mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshWishlist()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const displayWishlist = wishlist.length > 0 ? wishlist : localWishlist
   const isLoadingData = isLoading || fetchingGuest
@@ -86,7 +106,7 @@ export function WishlistPageClient() {
       </div>
 
       {/* Wishlist Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
         {displayWishlist.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}

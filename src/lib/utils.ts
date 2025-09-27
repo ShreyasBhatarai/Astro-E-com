@@ -37,14 +37,15 @@ export function validateNepalPhone(phone: string): boolean {
 }
 
 export function validateOrderStatusTransition(currentStatus: string, newStatus: string): boolean {
+  // Align transitions with our OrderStatus enum in prisma/schema.prisma
   const validTransitions: Record<string, string[]> = {
-    PENDING: ['CONFIRMED', 'CANCELLED'],
-    CONFIRMED: ['PROCESSING', 'CANCELLED'],
-    PROCESSING: ['SHIPPED', 'CANCELLED'],
-    SHIPPED: ['DELIVERED', 'RETURNED'],
-    DELIVERED: ['RETURNED'],
+    PENDING: ['PROCESSING', 'CANCELLED'],
+    PROCESSING: ['PACKAGED', 'CANCELLED', 'FAILED'],
+    PACKAGED: ['SHIPPED', 'CANCELLED', 'FAILED'],
+    SHIPPED: ['DELIVERED', 'FAILED'],
+    DELIVERED: [],
     CANCELLED: [],
-    RETURNED: []
+    FAILED: []
   }
 
   return validTransitions[currentStatus]?.includes(newStatus) || false

@@ -187,7 +187,7 @@ export function ProductInfo({ product, className }: ProductInfoProps) {
               <Star
                 key={i}
                 className={`h-5 w-5 ${
-                  i < Math.floor(product.averageRating || 0)
+                  i < Math.round(product.averageRating || 0)
                     ? 'fill-yellow-400 text-yellow-400'
                     : 'text-gray-200'
                 }`}
@@ -234,7 +234,7 @@ export function ProductInfo({ product, className }: ProductInfoProps) {
           </Badge>
         ) : (
           <Badge variant="default" className="bg-green-100 text-green-800">
-            In Stock
+            In Stock — {product.stock} available
           </Badge>
         )}
       </div>

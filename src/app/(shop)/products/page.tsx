@@ -4,6 +4,7 @@ import { getProducts, getCategories } from '@/lib/queries/products'
 import { ProductsPageClient } from '@/components/products/ProductsPageClient'
 import { ProductFilters } from '@/types'
 import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 
 interface ProductsPageProps {
   searchParams: {
@@ -73,20 +74,20 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const { data: products = [], pagination } = productsResult
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50/50 to-white">
+    <div className="min-h-screen ">
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="mb-8">
-          <ol className="flex items-center space-x-2 text-sm text-gray-500 bg-white px-4 py-3 rounded-lg shadow-sm">
+          <ol className="flex items-center space-x-2 text-sm text-gray-500  px-4 py-3 ">
             <li>
               <Link href="/" className="hover:text-astro-primary transition-colors">
                 Home
               </Link>
             </li>
-            <li className="text-gray-300">/</li>
+            <li className="text-gray-300"><ChevronRight className="h-4 w-4" /></li>
             <li className="text-gray-900 font-medium">
               {filters.search 
-                ? `Search: "${filters.search}"`
+                ? `${filters.search}`
                 : filters.category 
                 ? `${filters.category.charAt(0).toUpperCase() + filters.category.slice(1)}`
                 : 'All Products'

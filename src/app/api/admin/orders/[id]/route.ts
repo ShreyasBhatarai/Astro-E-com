@@ -111,7 +111,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
           userName: updatedOrder.shippingName || updatedOrder.user.name || 'Customer',
           orderNumber: updatedOrder.orderNumber,
           status: updatedOrder.status,
-          orderTotal: Number(updatedOrder.total)
+          orderTotal: Number(updatedOrder.total),
+          reason: body?.cancellationReason || body?.failureReason
         })
         console.log(`✅ Order status email sent to ${updatedOrder.user.email} for order ${updatedOrder.orderNumber}`)
       } catch (emailError) {

@@ -4,6 +4,7 @@ import { OrderStatusUpdateDialog } from '@/components/admin/OrderStatusUpdateDia
 import { ShippingUpdateForm } from '@/components/admin/ShippingUpdateForm'
 import { OrderStatusTimeline } from '@/components/orders/OrderStatusTimeline'
 import { OrderItemCard } from '@/components/admin/OrderItemCard'
+import { OrderQrDialog } from '@/components/admin/OrderQrDialog'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ShoppingCart, CreditCard, Package, User, Mail, Phone } from 'lucide-react'
 import Link from 'next/link'
@@ -46,10 +47,34 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
               </div>
             </div>
           </div>
-          <OrderStatusUpdateDialog 
-            orderId={order.id}
-            currentStatus={order.status}
-          />
+          <div className="flex items-center gap-2">
+            <OrderQrDialog order={{
+              id: order.id,
+              orderNumber: order.orderNumber,
+              status: order.status,
+              createdAt: order.createdAt,
+              subtotal: Number(order.subtotal),
+              shippingCost: Number(order.shippingCost),
+              total: Number(order.total),
+              shippingName: order.shippingName,
+              shippingPhone: order.shippingPhone,
+              shippingAddress: order.shippingAddress,
+              shippingCity: order.shippingCity,
+              shippingDistrict: order.shippingDistrict,
+              shippingProvince: order.shippingProvince,
+              user: { email: order.user?.email ?? null, name: order.user?.name ?? null, phone: order.user?.phone ?? null },
+              orderItems: order.orderItems.map((it) => ({
+                id: it.id,
+                quantity: it.quantity,
+                price: Number(it.price),
+                product: { name: it.product.name, sku: it.product.sku || null },
+              }))
+            }} />
+            <OrderStatusUpdateDialog
+              orderId={order.id}
+              currentStatus={order.status}
+            />
+          </div>
         </div>
         
         {/* Customer Information in Header */}
@@ -86,19 +111,12 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         )}
       </div>
 
-      {/* Status and Reasons */}
-      {(order.cancellationReason || order.failureReason) && (
+      {/* Status Reason */}
+      {(order.status === 'CANCELLED' || order.status === 'FAILED') && order.reason && (
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          {order.cancellationReason && (
-            <div className="text-sm text-red-600 mb-2">
-              <span className="font-medium">Cancellation Reason:</span> {order.cancellationReason}
-            </div>
-          )}
-          {order.failureReason && (
-            <div className="text-sm text-red-600">
-              <span className="font-medium">Failure Reason:</span> {order.failureReason}
-            </div>
-          )}
+          <div className="text-sm text-red-600">
+            <span className="font-medium">Reason:</span> {order.reason}
+          </div>
         </div>
       )}
 

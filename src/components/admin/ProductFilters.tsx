@@ -42,8 +42,6 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
       if (localFilters.status) params.set('status', localFilters.status)
       if (localFilters.isFeatured !== undefined) params.set('isFeatured', localFilters.isFeatured.toString())
       if (localFilters.search) params.set('search', localFilters.search)
-      if (localFilters.sortBy) params.set('sortBy', localFilters.sortBy)
-      if (localFilters.sortOrder) params.set('sortOrder', localFilters.sortOrder)
 
       const newUrl = `/admin/products?${params.toString()}`
       if (window.location.pathname + window.location.search !== newUrl) {
@@ -104,10 +102,10 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
     <div className="space-y-4">
       {/* Desktop Filters */}
       <div className="hidden md:block">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className=" p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {/* Search */}
-            <div className="relative">
+            <div className="relative lg:col-span-2 xl:col-span-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search products..."
@@ -176,26 +174,6 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
               </SelectContent>
             </Select>
 
-            {/* Sort */}
-            <Select value={`${localFilters.sortBy}-${localFilters.sortOrder}`} onValueChange={(value) => {
-              const [sortBy, sortOrder] = value.split('-')
-              updateFilter('sortBy', sortBy)
-              updateFilter('sortOrder', sortOrder)
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="createdAt-desc">Newest First</SelectItem>
-                <SelectItem value="createdAt-asc">Oldest First</SelectItem>
-                <SelectItem value="name-asc">Name A-Z</SelectItem>
-                <SelectItem value="name-desc">Name Z-A</SelectItem>
-                <SelectItem value="price-asc">Price Low to High</SelectItem>
-                <SelectItem value="price-desc">Price High to Low</SelectItem>
-                <SelectItem value="stock-asc">Stock Low to High</SelectItem>
-                <SelectItem value="stock-desc">Stock High to Low</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
         </div>
@@ -302,29 +280,6 @@ export function ProductFilters({ filters }: ProductFiltersProps) {
                 </Select>
               </div>
 
-              {/* Sort */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Sort by</label>
-                <Select value={`${localFilters.sortBy}-${localFilters.sortOrder}`} onValueChange={(value) => {
-                  const [sortBy, sortOrder] = value.split('-')
-                  updateFilter('sortBy', sortBy)
-                  updateFilter('sortOrder', sortOrder)
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select sort option" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="createdAt-desc">Newest First</SelectItem>
-                    <SelectItem value="createdAt-asc">Oldest First</SelectItem>
-                    <SelectItem value="name-asc">Name A-Z</SelectItem>
-                    <SelectItem value="name-desc">Name Z-A</SelectItem>
-                    <SelectItem value="price-asc">Price Low to High</SelectItem>
-                    <SelectItem value="price-desc">Price High to Low</SelectItem>
-                    <SelectItem value="stock-asc">Stock Low to High</SelectItem>
-                    <SelectItem value="stock-desc">Stock High to Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               {/* Actions */}
               <div className="flex gap-2 pt-4">

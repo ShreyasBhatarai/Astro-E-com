@@ -73,6 +73,8 @@ export function OrderCard({ order, className, onOrderUpdate }: OrderCardProps) {
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [isCancelling, setIsCancelling] = useState(false)
+  const [isReasonOpen, setIsReasonOpen] = useState(false)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
 
   // Handle both items and orderItems for compatibility
   const orderItems = order.items || order.orderItems || []
@@ -190,10 +192,13 @@ export function OrderCard({ order, className, onOrderUpdate }: OrderCardProps) {
         </Button>
           
           {canCancel && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-              onClick={() => setIsCancelDialogOpen(true)}
+              onClick={() => {
+                setCancelReason('')
+                setIsReasonOpen(true)
+              }}
             >
               <X className="h-4 w-4 mr-2" />
               Cancel Order
@@ -202,18 +207,15 @@ export function OrderCard({ order, className, onOrderUpdate }: OrderCardProps) {
         </div>
       </CardContent>
 
-      {/* Cancel Confirmation Dialog */}
-      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+      {/* Reason Dialog */}
+      <AlertDialog open={isReasonOpen} onOpenChange={(open) => { if (!isCancelling) setIsReasonOpen(open) }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Order</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel order #{order.orderNumber}? This action cannot be undone.
-            </AlertDialogDescription>
+            <AlertDialogTitle>Cancellation Reason</AlertDialogTitle>
+            <AlertDialogDescription>Please provide a brief reason for cancelling this order.</AlertDialogDescription>
           </AlertDialogHeader>
-          
           <div className="space-y-2">
-            <Label htmlFor="cancel-reason">Reason for cancellation (optional)</Label>
+            <Label htmlFor="cancel-reason">Reason *</Label>
             <Textarea
               id="cancel-reason"
               placeholder="Please let us know why you're cancelling this order..."
@@ -222,17 +224,56 @@ export function OrderCard({ order, className, onOrderUpdate }: OrderCardProps) {
               className="min-h-[80px]"
             />
           </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCancelling}>
+              Back
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                if (!cancelReason.trim()) return
+                setIsReasonOpen(false)
+                setIsConfirmOpen(true)
+              }}
+              disabled={isCancelling || !cancelReason.trim()}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
+      {/* Confirm Dialog */}
+      <AlertDialog open={isConfirmOpen} onOpenChange={(open) => { if (!isCancelling) setIsConfirmOpen(open) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Cancellation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel order #{order.orderNumber}?
+              {cancelReason.trim() && (
+                <>
+                  <br />
+                  <span className="block mt-2">Reason: {cancelReason}</span>
+                </>
+              )}
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isCancelling}>
               Keep Order
             </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleCancelOrder}
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                setIsConfirmOpen(false)
+                setIsCancelDialogOpen(true)
+                handleCancelOrder()
+              }}
               disabled={isCancelling}
               className="bg-red-600 hover:bg-red-700"
             >
-              {isCancelling ? 'Cancelling...' : 'Cancel Order'}
+              {isCancelling ? 'Cancelling...' : 'Confirm Cancel'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

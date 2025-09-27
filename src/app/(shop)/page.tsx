@@ -56,7 +56,7 @@ export default async function HomePage() {
         )}
 
         {/* Shop by Categories - Modern Grid */}
-        <section className="py-8 md:py-12 lg:py-16 bg-astro-gray-50">
+        <section className="py-8 md:py-12 lg:py-16 ">
           <div className="container mx-auto px-4">
             <div className="text-center mb-6 md:mb-8 lg:mb-10">
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-astro-gray-900">

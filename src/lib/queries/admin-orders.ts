@@ -33,9 +33,6 @@ export async function getAdminOrders(filters: AdminOrderFilters = {}): Promise<P
     where.status = status
   }
 
-  if (paymentMethod) {
-    where.paymentMethod = paymentMethod
-  }
 
   if (dateFrom || dateTo) {
     where.createdAt = {}
@@ -79,7 +76,6 @@ export async function getAdminOrders(filters: AdminOrderFilters = {}): Promise<P
           id: true,
           orderNumber: true,
           status: true,
-          paymentMethod: true,
           total: true,
           createdAt: true,
           shippingName: true,
@@ -111,7 +107,6 @@ export async function getAdminOrders(filters: AdminOrderFilters = {}): Promise<P
       id: order.id,
       orderNumber: order.orderNumber,
       status: order.status,
-      paymentMethod: order.paymentMethod,
       total: Number(order.total),
       createdAt: order.createdAt,
       shippingName: order.shippingName,
@@ -256,17 +251,14 @@ export async function updateOrderStatus(id: string, data: UpdateOrderStatusData,
       updatedAt: new Date()
     }
 
-    // Handle reason fields based on status
+    // Handle reason field based on status (single 'reason' column on Order)
     if (data.status === OrderStatus.CANCELLED) {
-      updateData.cancellationReason = data.cancellationReason
-      updateData.failureReason = null // Clear failure reason when cancelling
+      updateData.reason = data.cancellationReason || null
     } else if (data.status === OrderStatus.FAILED) {
-      updateData.failureReason = data.failureReason
-      updateData.cancellationReason = null // Clear cancellation reason when failing
+      updateData.reason = data.failureReason || null
     } else {
-      // Clear both reason fields for other statuses
-      updateData.cancellationReason = null
-      updateData.failureReason = null
+      // Clear reason for other statuses
+      updateData.reason = null
     }
 
     // Note: Timestamp fields like shippedAt/deliveredAt can be tracked via OrderStatusHistory
@@ -356,7 +348,8 @@ export async function updateOrderStatus(id: string, data: UpdateOrderStatusData,
         userName: result.user.name || 'Customer',
         orderNumber: result.orderNumber,
         status: data.status,
-        orderTotal: Number(result.total)
+        orderTotal: Number(result.total),
+        reason: data.status === OrderStatus.CANCELLED ? (data.cancellationReason || undefined) : (data.status === OrderStatus.FAILED ? (data.failureReason || undefined) : undefined)
       })
     } catch (emailError) {
       // console.error('Failed to send order status email:', emailError)

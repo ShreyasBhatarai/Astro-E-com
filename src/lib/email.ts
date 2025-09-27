@@ -251,6 +251,7 @@ export async function sendOrderStatusEmail(data: {
   orderNumber: string
   status: string
   orderTotal: number
+  reason?: string
 }) {
   try {
     const htmlContent = getOrderStatusEmailTemplate(data)

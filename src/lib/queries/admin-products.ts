@@ -72,10 +72,16 @@ export async function getAdminProducts(filters: AdminProductFilters = {}): Promi
   }
 
   if (search) {
+    const s = search
+    const slow = search.toLowerCase()
     where.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { sku: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } }
+      { name: { contains: s, mode: 'insensitive' } },
+      { sku: { contains: s, mode: 'insensitive' } },
+      { description: { contains: s, mode: 'insensitive' } },
+      { brand: { contains: s, mode: 'insensitive' } },
+      // Tags: best-effort exact/ci matches
+      { tags: { has: s } },
+      { tags: { has: slow } }
     ]
   }
 
@@ -95,6 +101,7 @@ export async function getAdminProducts(filters: AdminProductFilters = {}): Promi
           sku: true,
           price: true,
           originalPrice: true,
+          costPrice: true,
           stock: true,
           isActive: true,
           isFeatured: true,
@@ -204,13 +211,21 @@ export async function createProduct(data: CreateProductData): Promise<Product> {
 
     const product = await prisma.product.create({
       data: {
-        ...data,
+        name: data.name,
+        description: data.description,
         slug: finalSlug,
         sku,
         price: data.price,
-        originalPrice: data.originalPrice || null,
-        specifications: data.specifications || undefined,
-        tags: data.tags || [],
+        originalPrice: data.originalPrice!,
+        costPrice: data.costPrice!,
+        stock: data.stock,
+        images: data.images,
+        categoryId: data.categoryId,
+        brand: data.brand!,
+        weight: data.weight!,
+        dimensions: data.dimensions,
+        specifications: data.specifications,
+        tags: data.tags ?? [],
         isActive: data.isActive ?? true,
         isFeatured: data.isFeatured ?? false
       }
@@ -220,6 +235,7 @@ export async function createProduct(data: CreateProductData): Promise<Product> {
       ...product,
       price: product.price as any,
       originalPrice: product.originalPrice as any,
+      costPrice: product.costPrice as any,
       weight: product.weight as any,
     }
   } catch (error) {
@@ -280,6 +296,7 @@ export async function updateProduct(id: string, data: UpdateProductData): Promis
       ...product,
       price: product.price as any,
       originalPrice: product.originalPrice as any,
+      costPrice: product.costPrice as any,
       weight: product.weight as any,
     }
   } catch (error) {

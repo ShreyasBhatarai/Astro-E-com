@@ -2,18 +2,20 @@
 
 import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { Search, ShoppingBag, Filter, Calendar } from 'lucide-react'
+import { ShoppingBag, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { PageLoader } from '@/components/ui/loader'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatCurrency } from '@/lib/utils'
 import { format } from 'date-fns'
 import Link from 'next/link'
-import { ProductPagination } from '@/components/ui/product-pagination'
+import { PaginationWithRows } from '@/components/ui/pagination-with-rows'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 
 interface Order {
   id: string
@@ -21,6 +23,7 @@ interface Order {
   status: string
   total: number
   createdAt: string
+  reason?: string | null
   orderItems: Array<{
     id: string
     quantity: number
@@ -60,14 +63,20 @@ const ORDER_STATUSES = [
 
 export function AuthenticatedOrdersPage() {
   const { data: session } = useSession()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
   const [activeStatus, setActiveStatus] = useState('ALL')
-  const [sortBy, setSortBy] = useState('createdAt')
-  const [sortOrder, setSortOrder] = useState('desc')
-  const [dateRange, setDateRange] = useState('all')
-  const [showFilters, setShowFilters] = useState(false)
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  // Cancellation UI state
+  const [cancelOrderNumber, setCancelOrderNumber] = useState<string | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [cancelReason, setCancelReason] = useState('')
+  const [isReasonOpen, setIsReasonOpen] = useState(false)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -77,23 +86,19 @@ export function AuthenticatedOrdersPage() {
     hasPrev: false
   })
 
-  const fetchOrders = async (page = 1, search = '', status = 'ALL', sort = 'createdAt', order = 'desc', dateFilter = 'all') => {
+  const fetchOrders = async (pageArg = page, statusArg = activeStatus, limitArg = limit) => {
     if (!session) return
 
     setIsLoading(true)
     try {
       const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '10',
-        sortBy: sort,
-        sortOrder: order
+        page: String(pageArg),
+        limit: String(limitArg)
       })
-      
-      if (search) params.append('search', search)
-      if (status && status !== 'ALL') params.append('status', status)
-      if (dateFilter && dateFilter !== 'all') params.append('dateRange', dateFilter)
 
-      const response = await fetch(`/api/orders?${params}`)
+      if (statusArg && statusArg !== 'ALL') params.append('status', statusArg)
+
+      const response = await fetch(`/api/orders?${params.toString()}`)
       const result: OrdersResponse = await response.json()
 
       if (result.success) {
@@ -109,45 +114,39 @@ export function AuthenticatedOrdersPage() {
     }
   }
 
+  // Initialize from URL params
   useEffect(() => {
-    if (session) {
-      fetchOrders(1, searchQuery, activeStatus, sortBy, sortOrder, dateRange)
-    }
-  }, [session, activeStatus, sortBy, sortOrder, dateRange])
+    const p = parseInt(searchParams.get('page') || '1')
+    const l = parseInt(searchParams.get('limit') || '10')
+    const s = (searchParams.get('status') || 'ALL').toUpperCase()
+    setPage(Number.isNaN(p) ? 1 : p)
+    setLimit(Number.isNaN(l) ? 10 : l)
+    setActiveStatus(s)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    fetchOrders(1, searchQuery, activeStatus, sortBy, sortOrder, dateRange)
-  }
+  // Fetch and sync URL when dependencies change
+  useEffect(() => {
+    if (!session) return
+    fetchOrders(page, activeStatus, limit)
+    const params = new URLSearchParams()
+    params.set('page', String(page))
+    params.set('limit', String(limit))
+    if (activeStatus && activeStatus !== 'ALL') params.set('status', activeStatus)
+    else params.delete('status')
+    const qs = params.toString()
+    const url = qs ? `/orders?${qs}` : '/orders'
+    router.replace(url)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, page, limit, activeStatus])
 
   const handleStatusChange = (status: string) => {
     setActiveStatus(status)
-    setPagination(prev => ({ ...prev, page: 1 }))
+    setPage(1)
   }
 
   const handlePageChange = (newPage: number) => {
-    fetchOrders(newPage, searchQuery, activeStatus, sortBy, sortOrder, dateRange)
-  }
-
-  const handleSortChange = (value: string) => {
-    const [newSortBy, newSortOrder] = value.split('-')
-    setSortBy(newSortBy)
-    setSortOrder(newSortOrder)
-    setPagination(prev => ({ ...prev, page: 1 }))
-  }
-
-  const handleDateRangeChange = (value: string) => {
-    setDateRange(value)
-    setPagination(prev => ({ ...prev, page: 1 }))
-  }
-
-  const clearFilters = () => {
-    setSearchQuery('')
-    setActiveStatus('ALL')
-    setSortBy('createdAt')
-    setSortOrder('desc')
-    setDateRange('all')
-    setPagination(prev => ({ ...prev, page: 1 }))
+    setPage(newPage)
   }
 
   const getStatusBadge = (status: string) => {
@@ -173,87 +172,6 @@ export function AuthenticatedOrdersPage() {
         </p>
       </div>
 
-      {/* Search Bar */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <form onSubmit={handleSearch} className="space-y-4">
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <Input
-                  type="text"
-                  placeholder="Search by order number or product name..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="font-normal"
-                />
-              </div>
-              <Button type="submit" disabled={isLoading} className="font-normal">
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setShowFilters(!showFilters)}
-                className="font-normal"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-              </Button>
-            </div>
-            
-            {/* Advanced Filters */}
-            {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Sort By</label>
-                  <Select value={`${sortBy}-${sortOrder}`} onValueChange={handleSortChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sort by..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="createdAt-desc">Newest First</SelectItem>
-                      <SelectItem value="createdAt-asc">Oldest First</SelectItem>
-                      <SelectItem value="total-desc">Highest Amount</SelectItem>
-                      <SelectItem value="total-asc">Lowest Amount</SelectItem>
-                      <SelectItem value="orderNumber-asc">Order Number A-Z</SelectItem>
-                      <SelectItem value="orderNumber-desc">Order Number Z-A</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Date Range</label>
-                  <Select value={dateRange} onValueChange={handleDateRangeChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select date range..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Time</SelectItem>
-                      <SelectItem value="today">Today</SelectItem>
-                      <SelectItem value="week">This Week</SelectItem>
-                      <SelectItem value="month">This Month</SelectItem>
-                      <SelectItem value="3months">Last 3 Months</SelectItem>
-                      <SelectItem value="year">This Year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex items-end">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={clearFilters}
-                    className="font-normal w-full"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
-              </div>
-            )}
-          </form>
-        </CardContent>
-      </Card>
 
       {/* Status Tabs */}
       <div className="mb-6">
@@ -266,8 +184,8 @@ export function AuthenticatedOrdersPage() {
               onClick={() => handleStatusChange(status.value)}
               className={`
                 flex-shrink-0 font-normal text-sm px-4 py-2 rounded-full transition-all
-                ${activeStatus === status.value 
-                  ? 'bg-astro-primary text-white shadow-md' 
+                ${activeStatus === status.value
+                  ? 'bg-astro-primary text-white shadow-md'
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                 }
               `}
@@ -296,7 +214,7 @@ export function AuthenticatedOrdersPage() {
                   {activeStatus === 'ALL' ? 'No orders yet' : `No ${ORDER_STATUSES.find(s => s.value === activeStatus)?.label.toLowerCase()} orders`}
                 </h3>
                 <p className="text-muted-foreground mb-6 font-normal">
-                  {activeStatus === 'ALL' 
+                  {activeStatus === 'ALL'
                     ? "Start shopping to see your orders here."
                     : `You don't have any ${ORDER_STATUSES.find(s => s.value === activeStatus)?.label.toLowerCase()} orders.`
                   }
@@ -327,6 +245,9 @@ export function AuthenticatedOrdersPage() {
                           <h3 className="font-normal text-lg">#{order.orderNumber}</h3>
                           {getStatusBadge(order.status)}
                         </div>
+                        {order.status === 'CANCELLED' && order.reason && (
+                          <p className="text-sm text-red-600 font-normal">Reason: {order.reason}</p>
+                        )}
                         <p className="text-sm text-muted-foreground font-normal">
                           Placed on {format(new Date(order.createdAt), 'PPP')}
                         </p>
@@ -344,37 +265,20 @@ export function AuthenticatedOrdersPage() {
                               View Details
                             </Link>
                           </Button>
-                              {order.status === 'PENDING' && (
-                                <Button 
-                                  variant="outline" 
-                                  className="font-normal border-red-200 text-red-600 hover:bg-red-50"
-                                  onClick={async () => {
-                                    const reason = prompt('Please provide a reason for cancelling this order:')
-                                    if (reason && reason.trim()) {
-                                      try {
-                                        const response = await fetch(`/api/orders/${order.orderNumber}/cancel`, {
-                                          method: 'POST',
-                                          headers: { 'Content-Type': 'application/json' },
-                                          body: JSON.stringify({ reason: reason.trim() })
-                                        })
-                                        const result = await response.json()
-                                        if (result.success) {
-                                          alert('Order cancelled successfully')
-                                          fetchOrders(pagination.page, searchQuery, activeStatus)
-                                        } else {
-                                          alert('Failed to cancel order')
-                                        }
-                                      } catch (error) {
-                                        alert('Failed to cancel order')
-                                      }
-                                    } else if (reason !== null) {
-                                      alert('Cancellation reason is required')
-                                    }
-                                  }}
-                                >
-                                  Cancel Order
-                                </Button>
-                              )}
+                          {order.status === 'PENDING' && (
+                            <Button
+                              variant="outline"
+                              className="font-normal border-red-200 text-red-600 hover:bg-red-50"
+                              onClick={() => {
+                                setSelectedOrder(order)
+                                setCancelOrderNumber(order.orderNumber)
+                                setCancelReason('')
+                                setIsReasonOpen(true)
+                              }}
+                            >
+                              Cancel Order
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -384,17 +288,113 @@ export function AuthenticatedOrdersPage() {
             </div>
 
             {/* Pagination */}
-            <ProductPagination
-              currentPage={pagination.page}
-              totalPages={pagination.totalPages}
-              totalItems={pagination.total}
-              itemsPerPage={pagination.limit || 10}
-              onPageChange={handlePageChange}
-              className="mt-8"
-            />
+            <div className="mt-8">
+              <PaginationWithRows
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                totalItems={pagination.total}
+                itemsPerPage={limit}
+                onPageChange={handlePageChange}
+                onRowsChange={(rows) => { setLimit(rows); setPage(1) }}
+              />
+            </div>
           </div>
         )}
       </div>
+
+      {/* Two-step Cancel UI */}
+      <Dialog open={isReasonOpen} onOpenChange={(open) => { if (!isCancelling) setIsReasonOpen(open) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{cancelOrderNumber ? `Cancel Order #${cancelOrderNumber}` : 'Cancel Order'}</DialogTitle>
+            <DialogDescription>Please provide a reason (minimum 10 characters) for cancelling this order.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Textarea
+              placeholder="Please let us know why you're cancelling this order..."
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              rows={4}
+              disabled={isCancelling}
+            />
+            {cancelReason.trim().length > 0 && cancelReason.trim().length < 10 && (
+              <p className="text-sm text-red-600">Reason must be at least 10 characters.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsReasonOpen(false)} disabled={isCancelling}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (cancelReason.trim().length < 10) return
+                setIsReasonOpen(false)
+                setIsConfirmOpen(true)
+              }}
+              disabled={isCancelling || cancelReason.trim().length < 10}
+            >
+              Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isConfirmOpen} onOpenChange={(open) => { if (!isCancelling) setIsConfirmOpen(open) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to cancel this order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedOrder && (
+                <div className="mt-2 space-y-1 text-sm">
+                  <div><span className="font-medium">Order:</span> #{selectedOrder.orderNumber}</div>
+                  <div><span className="font-medium">Current status:</span> {selectedOrder.status}</div>
+                  <div><span className="font-medium">Total amount:</span> {formatCurrency(selectedOrder.total)}</div>
+                  <div className="mt-2"><span className="font-medium">Reason:</span> {cancelReason}</div>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCancelling} onClick={() => { setIsConfirmOpen(false); setIsReasonOpen(true) }}>Go Back</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async (e) => {
+                e.preventDefault()
+                if (!cancelOrderNumber) return
+                setIsCancelling(true)
+                try {
+                  const response = await fetch(`/api/orders/${cancelOrderNumber}/cancel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: cancelReason.trim() })
+                  })
+                  const result = await response.json()
+                  if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Failed to cancel order')
+                  }
+                  toast.success(`Order #${cancelOrderNumber} has been cancelled successfully`)
+                  setIsConfirmOpen(false)
+                  setIsReasonOpen(false)
+                  setCancelOrderNumber(null)
+                  setSelectedOrder(null)
+                  setCancelReason('')
+                  fetchOrders(page, activeStatus, limit)
+                } catch (err: any) {
+                  toast.error(err?.message || 'Failed to cancel order')
+                } finally {
+                  setIsCancelling(false)
+                }
+              }}
+              disabled={isCancelling || !cancelOrderNumber}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isCancelling ? (
+                <span className="inline-flex items-center"><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Cancelling...</span>
+              ) : (
+                'Yes, Cancel Order'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   )
 }

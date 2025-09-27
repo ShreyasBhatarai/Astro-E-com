@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Search, ShoppingCart, RefreshCw, Eye } from 'lucide-react'
+import { ShoppingCart, RefreshCw, Eye, Search } from 'lucide-react'
 import Link from 'next/link'
 import { PaginationWithRows } from '@/components/ui/pagination-with-rows'
 import { formatCurrency } from '@/lib/utils'
@@ -19,11 +19,11 @@ interface Order {
   orderNumber: string
   status: string
   total: number
-  paymentMethod: string
   createdAt: Date
   user: {
     name: string
     email: string
+    phone: string | null
   }
   orderItems: Array<{
     quantity: number
@@ -50,13 +50,10 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [paymentFilter, setPaymentFilter] = useState('all')
+  const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
-  const [sortBy, setSortBy] = useState('createdAt')
-  const [sortOrder, setSortOrder] = useState('desc')
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -73,16 +70,13 @@ export default function AdminOrdersPage() {
       } else {
         setLoading(true)
       }
-      
+
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
-        search,
-        status: statusFilter,
-        paymentMethod: paymentFilter,
-        sortBy,
-        sortOrder
+        status: statusFilter
       })
+      if (search) params.set('search', search)
 
       const response = await fetch(`/api/admin/orders?${params}`)
       if (!response.ok) throw new Error('Failed to fetch orders')
@@ -101,7 +95,7 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders()
-  }, [page, search, statusFilter, paymentFilter, limit])
+  }, [page, statusFilter, limit, search])
 
   // Auto-refresh every minute
   useEffect(() => {
@@ -110,13 +104,9 @@ export default function AdminOrdersPage() {
     }, 60000) // 60 seconds
 
     return () => clearInterval(interval)
-  }, [page, search, statusFilter, paymentFilter, limit])
+  }, [page, statusFilter, limit])
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setPage(1)
-    fetchOrders()
-  }
+
 
   const handleManualRefresh = () => {
     fetchOrders(true) // Show loading for manual refresh
@@ -140,20 +130,6 @@ export default function AdminOrdersPage() {
     )
   }
 
-  const getPaymentBadge = (method: string) => {
-    switch (method) {
-      case 'CASH':
-        return <Badge>COD</Badge>
-      case 'COD':
-        return <Badge>COD</Badge>
-      case 'ESEWA':
-        return <Badge variant="default">eSewa</Badge>
-      case 'KHALTI':
-        return <Badge variant="default">Khalti</Badge>
-      default:
-        return <Badge variant="outline">{method}</Badge>
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -182,21 +158,21 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <form onSubmit={handleSearch} className="flex gap-4">
+      <Card className="!bg-gray-50 !border-0 shadow-none">
+        <CardContent className="pt-6 ">
+          <div className="flex flex-row gap-4 items-center justify-between">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search orders..."
+                  placeholder="Search orders by number, name, email, or phone..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setPage(1); setSearch(e.target.value) }}
                   className="pl-9"
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(v) => { setPage(1); setStatusFilter(v) }}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
@@ -211,18 +187,7 @@ export default function AdminOrdersPage() {
                 <SelectItem value="FAILED">Failed</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by payment" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Payment</SelectItem>
-                <SelectItem value="COD">Cash on Delivery</SelectItem>
-                <SelectItem value="ONLINE">Online Payment</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button type="submit">Search</Button>
-          </form>
+          </div>
         </CardContent>
       </Card>
 
@@ -239,8 +204,8 @@ export default function AdminOrdersPage() {
               <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium">No orders found</h3>
               <p className="text-muted-foreground">
-                {search || statusFilter !== 'all' || paymentFilter !== 'all'
-                  ? 'Try adjusting your search filters.' 
+                {statusFilter !== 'all'
+                  ? 'Try adjusting the status filter.'
                   : 'No orders have been placed yet.'}
               </p>
             </div>
@@ -250,29 +215,10 @@ export default function AdminOrdersPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-4 font-medium">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="font-medium p-0 h-auto"
-                          onClick={() => {
-                            const newSort = sortBy === 'orderNumber' && sortOrder === 'asc' ? 'desc' : 'asc'
-                            setSortBy('orderNumber')
-                            setSortOrder(newSort)
-                          }}
-                        >
-                          Order ID
-                          {sortBy === 'orderNumber' && (
-                            <span className="ml-1">
-                              {sortOrder === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </Button>
-                      </th>
+                      <th className="text-left p-4 font-medium">Order ID</th>
                       <th className="text-left p-4 font-medium">Customer</th>
                       <th className="text-left p-4 font-medium">Items</th>
                       <th className="text-left p-4 font-medium">Total</th>
-                      <th className="text-left p-4 font-medium">Payment</th>
                       <th className="text-left p-4 font-medium">Status</th>
                       <th className="text-left p-4 font-medium">Date</th>
                       <th className="text-left p-4 font-medium">Actions</th>
@@ -290,6 +236,9 @@ export default function AdminOrdersPage() {
                           <div>
                             <div className="font-medium">{order.user.name}</div>
                             <div className="text-sm text-muted-foreground">{order.user.email}</div>
+                            {order.user.phone && (
+                              <div className="text-sm text-muted-foreground">{order.user.phone}</div>
+                            )}
                           </div>
                         </td>
                         <td className="p-4">
@@ -300,9 +249,7 @@ export default function AdminOrdersPage() {
                         <td className="p-4">
                           <span className="font-medium">{formatCurrency(order.total)}</span>
                         </td>
-                        <td className="p-4">
-                          {getPaymentBadge(order.paymentMethod)}
-                        </td>
+
                         <td className="p-4">
                           {getStatusBadge(order.status)}
                         </td>

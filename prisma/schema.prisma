@@ -74,15 +74,16 @@ model Product {
   id          String   @id @default(cuid())
   name        String
   slug        String   @unique
-  description String?
-  price       Decimal  @db.Decimal(10, 2)
-  originalPrice Decimal? @db.Decimal(10, 2)
-  sku         String?  @unique
+  description String
+  price         Decimal  @db.Decimal(10, 2)
+  originalPrice Decimal @db.Decimal(10, 2)
+  costPrice     Decimal @db.Decimal(10, 2)
+  sku           String  @unique
   stock       Int      @default(0)
   images      String[]
   categoryId  String
-  brand       String?
-  weight      Decimal? @db.Decimal(8, 2)
+  brand       String
+  weight      Decimal @db.Decimal(8, 2)
   dimensions  String?
   specifications Json?
   isActive    Boolean  @default(true)

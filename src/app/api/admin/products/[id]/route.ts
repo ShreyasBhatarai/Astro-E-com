@@ -79,6 +79,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       description: body.description,
       price: body.price,
       originalPrice: body.originalPrice,
+      costPrice: body.costPrice,
       sku: body.sku,
       stock: body.stock,
       images: body.images,
@@ -139,11 +140,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     // For partial updates, only update the fields provided
     const updateData: Partial<UpdateProductData> = {}
-    
+
     if (body.isActive !== undefined) updateData.isActive = body.isActive
     if (body.isFeatured !== undefined) updateData.isFeatured = body.isFeatured
     if (body.stock !== undefined) updateData.stock = body.stock
     if (body.price !== undefined) updateData.price = body.price
+    if (body.costPrice !== undefined) updateData.costPrice = body.costPrice
 
     const product = await updateProduct(resolvedParams.id, updateData)
 

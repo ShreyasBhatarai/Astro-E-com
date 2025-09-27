@@ -23,6 +23,7 @@ const productSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   price: z.number().min(0.01, 'Price must be greater than 0'),
   originalPrice: z.number().min(0).optional(),
+  costPrice: z.number().min(0).optional(),
   sku: z.string().optional(),
   stock: z.number().min(0, 'Stock cannot be negative'),
   categoryId: z.string().min(1, 'Category is required'),
@@ -46,9 +47,10 @@ const productSchema = z.object({
 type ProductFormData = z.infer<typeof productSchema>
 
 // Serialized product type for client components (Decimal → number)
-type SerializedProduct = Omit<Product, 'price' | 'originalPrice' | 'weight'> & {
+type SerializedProduct = Omit<Product, 'price' | 'originalPrice' | 'costPrice' | 'weight'> & {
   price: number
   originalPrice: number | null
+  costPrice: number | null
   weight: number | null
   category: { id: string; name: string; slug: string }
 }
@@ -85,6 +87,7 @@ export function ProductForm({ mode, product }: ProductFormProps) {
       description: product?.description || '',
       price: product?.price ? Number(product.price) : 0,
       originalPrice: product?.originalPrice ? Number(product.originalPrice) : undefined,
+      costPrice: product?.costPrice ? Number(product.costPrice) : undefined,
       sku: product?.sku || '',
       stock: product?.stock || 0,
       categoryId: product?.categoryId || '',
@@ -206,7 +209,7 @@ export function ProductForm({ mode, product }: ProductFormProps) {
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="price"
@@ -214,10 +217,10 @@ export function ProductForm({ mode, product }: ProductFormProps) {
                       <FormItem>
                         <FormLabel>Price (NPR) *</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
+                          <Input
+                            type="number"
                             step="0.01"
-                            placeholder="0.00" 
+                            placeholder="0.00"
                             {...field}
                             value={field.value || ''}
                             onChange={(e) => field.onChange(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
@@ -235,10 +238,31 @@ export function ProductForm({ mode, product }: ProductFormProps) {
                       <FormItem>
                         <FormLabel>Original Price (NPR)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
+                          <Input
+                            type="number"
                             step="0.01"
-                            placeholder="0.00" 
+                            placeholder="0.00"
+                            {...field}
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value) || undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="costPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cost Price (NPR)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
                             {...field}
                             value={field.value || ''}
                             onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value) || undefined)}

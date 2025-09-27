@@ -16,9 +16,10 @@ import {
   Target,
   Star
 } from 'lucide-react'
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import Image from 'next/image'
 import { formatCurrency } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
 
 interface AnalyticsData {
   overview: {
@@ -30,6 +31,7 @@ interface AnalyticsData {
     newOrders: number
     deliveredOrders: number
     averageOrderValue: number
+    totalProfit: number
   }
   orderStatusDistribution: Array<{
     status: string
@@ -39,6 +41,7 @@ interface AnalyticsData {
   topProducts: Array<{
     product: {
       id: string
+      slug: string
       name: string
       price: number
       images: string[]
@@ -66,6 +69,11 @@ interface AnalyticsData {
     date: string
     users: number
   }>
+  profitTrend: Array<{
+    date: string
+    profit: number
+    margin: number
+  }>
   period: number
 }
 
@@ -80,6 +88,7 @@ const STATUS_COLORS = {
 }
 
 export default function AdminAnalyticsPage() {
+  const router = useRouter()
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState('7')
@@ -121,7 +130,7 @@ export default function AdminAnalyticsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-1">Detailed insights and performance metrics</p>
         </div>
         <div className="flex items-center gap-2">
@@ -134,7 +143,7 @@ export default function AdminAnalyticsPage() {
               <SelectItem value="7">Last 7 days</SelectItem>
               <SelectItem value="30">Last 30 days</SelectItem>
               <SelectItem value="90">Last 3 months</SelectItem>
-              <SelectItem value="365">Last year</SelectItem>
+
             </SelectContent>
           </Select>
         </div>
@@ -164,9 +173,7 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.overview.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">
-              +{data.overview.newUsers} new users in last {period} days
-            </p>
+            <p className="text-xs text-muted-foreground">+{data.overview.newUsers} new in last {period} days</p>
           </CardContent>
         </Card>
 
@@ -189,7 +196,7 @@ export default function AdminAnalyticsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{data.overview.totalOrders}</div>
             <p className="text-xs text-muted-foreground">
-              +{data.overview.newOrders} new orders in last {period} days
+              Avg: {formatCurrency(data.overview.averageOrderValue)} per order
             </p>
           </CardContent>
         </Card>
@@ -202,7 +209,7 @@ export default function AdminAnalyticsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(data.overview.totalRevenue)}</div>
             <p className="text-xs text-muted-foreground">
-              Avg: {formatCurrency(data.overview.averageOrderValue)} per order
+              Total Profit: {formatCurrency(data.overview.totalProfit)}
             </p>
           </CardContent>
         </Card>
@@ -210,90 +217,73 @@ export default function AdminAnalyticsPage() {
 
       {/* Charts Row */}
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Sales Trend */}
+        {/* Revenue vs Profit */}
         <Card>
           <CardHeader>
-            <CardTitle>Sales Trend</CardTitle>
+            <CardTitle>Revenue vs Profit</CardTitle>
           </CardHeader>
           <CardContent>
-            {data.salesTrend.length > 0 ? (
+            {data.salesTrend.length > 0 || data.profitTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={data.salesTrend}>
+                <LineChart data={(function(){
+                  const map = new Map<string, any>()
+                  data.salesTrend.forEach(d => {
+                    const existing = map.get(d.date) || { date: d.date }
+                    existing.revenue = d.revenue
+                    existing.orders = d.orders
+                    map.set(d.date, existing)
+                  })
+                  data.profitTrend.forEach(d => {
+                    const existing = map.get(d.date) || { date: d.date }
+                    existing.profit = d.profit
+                    map.set(d.date, existing)
+                  })
+                  return Array.from(map.values()).sort((a,b) => a.date.localeCompare(b.date))
+                })()}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="date" 
-                    tickFormatter={formatDate}
-                  />
-                  <YAxis 
-                    tickFormatter={(value) => {
-                      if (value >= 1000000) {
-                        return `${(value / 1000000).toFixed(1)}M`
-                      } else if (value >= 1000) {
-                        return `${(value / 1000).toFixed(1)}K`
-                      }
-                      return value.toString()
-                    }}
-                  />
-                  <Tooltip 
-                    labelFormatter={(value) => formatDate(value as string)}
-                    formatter={(value: any, name: string) => [
-                      name === 'revenue' ? formatCurrency(value) : value,
-                      name === 'revenue' ? 'Revenue' : 'Orders'
-                    ]}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="#8884d8" 
-                    fill="#8884d8" 
-                    fillOpacity={0.6} 
-                  />
-                </AreaChart>
+                  <XAxis dataKey="date" tickFormatter={formatDate} />
+                  <YAxis tickFormatter={(value) => {
+                    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
+                    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`
+                    return value.toString()
+                  }} />
+                  <Tooltip labelFormatter={(value) => formatDate(value as string)} formatter={(value: any, name: string) => [
+                    name === 'revenue' || name === 'profit' ? formatCurrency(value) : value,
+                    name === 'revenue' ? 'Revenue' : name === 'profit' ? 'Profit' : 'Orders'
+                  ]} />
+                  <Line type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2} />
+                  <Line type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2} />
+                </LineChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex flex-col items-center justify-center h-[300px]">
                 <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No sales data available</p>
+                <p className="text-muted-foreground">No trend data available</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* User Registration Trend */}
+        {/* User Registrations */}
         <Card>
           <CardHeader>
-            <CardTitle>User Registration Trend</CardTitle>
+            <CardTitle>User Registrations</CardTitle>
           </CardHeader>
           <CardContent>
             {data.userTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={data.userTrend}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="date" 
-                    tickFormatter={formatDate}
-                  />
-                  <YAxis 
-                    tickFormatter={(value) => Math.floor(value).toString()}
-                    domain={['dataMin', 'dataMax']}
-                    allowDecimals={false}
-                  />
-                  <Tooltip 
-                    labelFormatter={(value) => formatDate(value as string)}
-                    formatter={(value: any) => [value, 'New Users']}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="users" 
-                    stroke="#82ca9d" 
-                    strokeWidth={2}
-                  />
+                  <XAxis dataKey="date" tickFormatter={formatDate} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip labelFormatter={(value) => formatDate(value as string)} formatter={(value: any) => [value, 'New Users']} />
+                  <Line type="monotone" dataKey="users" stroke="#3b82f6" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex flex-col items-center justify-center h-[300px]">
-                <Users className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No user registration data</p>
+                <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No user data available</p>
               </div>
             )}
           </CardContent>
@@ -346,13 +336,13 @@ export default function AdminAnalyticsPage() {
         {/* Top Products */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Selling Products</CardTitle>
+            <CardTitle>Top Selling Product</CardTitle>
           </CardHeader>
           <CardContent>
             {data.topProducts.length > 0 ? (
               <div className="space-y-4">
-                {data.topProducts.map((item, index) => (
-                  <div key={item.product.id} className="flex items-center justify-between">
+                {data.topProducts.map((item) => (
+                  <div key={item.product.id} className="flex items-center cursor-pointer justify-between" onClick={() => router.push(`/products/${item.product.slug}`)}>
                     <div className="flex items-center space-x-3">
                       <div className="relative h-10 w-10 flex-shrink-0">
                         <Image
@@ -402,7 +392,7 @@ export default function AdminAnalyticsPage() {
             {data.recentOrders.length > 0 ? (
               <div className="space-y-4">
                 {data.recentOrders.slice(0, 5).map((order) => (
-                  <div key={order.id} className="flex items-center justify-between">
+                  <div key={order.id} className="flex items-center cursor-pointer justify-between" onClick={() => router.push(`/admin/orders/${order.id}`)}>
                     <div>
                       <p className="text-sm font-medium">#{order.orderNumber}</p>
                       <p className="text-xs text-muted-foreground">

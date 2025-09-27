@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { toast } from 'sonner'
 import { Star } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +24,11 @@ interface ReviewSectionProps {
 export function ReviewSection({ reviews, averageRating, totalReviews, productId, className }: ReviewSectionProps) {
   const [refreshKey, setRefreshKey] = useState(0)
 
+  // Client-side pagination state for reviews
+  const [visibleReviews, setVisibleReviews] = useState<ReviewWithUser[]>([...reviews])
+  const [offset, setOffset] = useState(reviews.length)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+
   const handleReviewSubmitted = () => {
     setRefreshKey(prev => prev + 1)
     // Trigger a page refresh to show the new review
@@ -31,13 +37,13 @@ export function ReviewSection({ reviews, averageRating, totalReviews, productId,
 
   // Calculate adaptive scroll area height based on number of reviews
   const getScrollAreaHeight = () => {
-    const reviewCount = displayedReviews.length
+    const reviewCount = visibleReviews.length
     const maxHeight = 400 // Maximum height in pixels
     const minHeight = 120 // Minimum height for empty state
     const reviewCardHeight = 120 // Approximate height per review card
-    
+
     if (reviewCount === 0) return minHeight
-    
+
     const calculatedHeight = reviewCount * reviewCardHeight
     return Math.min(calculatedHeight, maxHeight)
   }
@@ -49,8 +55,8 @@ export function ReviewSection({ reviews, averageRating, totalReviews, productId,
     percentage: totalReviews > 0 ? (reviews.filter(review => review.rating === rating).length / totalReviews) * 100 : 0
   }))
 
-  // Show reviews in newest first order
-  const displayedReviews = reviews.sort((a, b) => {
+  // Show reviews in newest first order (visible only)
+  const displayedReviews = visibleReviews.sort((a, b) => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   })
 
@@ -195,10 +201,40 @@ export function ReviewSection({ reviews, averageRating, totalReviews, productId,
       </div>
 
       {/* Load More Reviews */}
-      {displayedReviews.length < reviews.length && (
+      {displayedReviews.length < totalReviews && (
         <div className="text-center mt-8">
-          <Button variant="outline">
-            Load More Reviews
+          <Button
+            variant="outline"
+            disabled={isLoadingMore}
+            onClick={async () => {
+              if (isLoadingMore) return
+              setIsLoadingMore(true)
+              try {
+                const params = new URLSearchParams({ offset: offset.toString(), limit: '7' })
+                const res = await fetch(`/api/products/${productId}/reviews?${params.toString()}`)
+                const json = await res.json()
+                if (!res.ok || !json.success) {
+                  throw new Error(json.error || 'Failed to load reviews')
+                }
+                const newReviews = json.data as ReviewWithUser[]
+                setVisibleReviews(prev => [...prev, ...newReviews])
+                setOffset(prev => prev + newReviews.length)
+              } catch (e: any) {
+                toast.error(e?.message || 'Failed to load more reviews')
+              } finally {
+                setIsLoadingMore(false)
+              }
+            }}
+            className="min-w-[180px]"
+          >
+            {isLoadingMore ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                Loading...
+              </>
+            ) : (
+              <>Load More</>
+            )}
           </Button>
         </div>
       )}

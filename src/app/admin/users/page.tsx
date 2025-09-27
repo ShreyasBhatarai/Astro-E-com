@@ -177,7 +177,6 @@ export default function AdminUsersPage() {
                 <SelectItem value="ADMIN">Admins</SelectItem>
               </SelectContent>
             </Select>
-            <Button type="submit">Search</Button>
           </form>
         </CardContent>
       </Card>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getAdminOrders } from '@/lib/queries/admin-orders'
-import { AdminApiResponse, AdminOrderFilters, OrderStatus, PaymentMethod } from '@/types'
+import { AdminApiResponse, AdminOrderFilters, OrderStatus } from '@/types'
 
 // GET /api/admin/orders - Get paginated orders with filtering (latest-first)
 export async function GET(request: NextRequest) {
@@ -20,13 +20,11 @@ export async function GET(request: NextRequest) {
     
     // Parse query parameters
     const statusParam = searchParams.get('status')
-    const paymentMethodParam = searchParams.get('paymentMethod')
-    
+
     const filters: AdminOrderFilters = {
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1,
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 20,
-      status: statusParam && statusParam !== 'all' ? statusParam as OrderStatus : undefined,
-      paymentMethod: paymentMethodParam && paymentMethodParam !== 'all' ? paymentMethodParam as PaymentMethod : undefined,
+      status: statusParam && statusParam !== 'all' ? (statusParam as OrderStatus) : undefined,
       dateFrom: searchParams.get('dateFrom') ? new Date(searchParams.get('dateFrom')! + 'T00:00:00.000Z') : undefined,
       dateTo: searchParams.get('dateTo') ? new Date(searchParams.get('dateTo')! + 'T23:59:59.999Z') : undefined,
       search: searchParams.get('search') || undefined,

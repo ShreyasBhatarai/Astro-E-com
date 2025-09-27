@@ -103,57 +103,72 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
 
   if (search) {
     const searchTerms = search.split(' ').filter(term => term.length > 0)
-    
+
     // Generate all possible variations for each search term (including pluralization)
     const allVariations: string[] = []
     searchTerms.forEach(term => {
       const variations = generateSearchVariations(term)
       allVariations.push(...variations)
     })
-    
+
     // Remove duplicates and filter out very short terms
     const uniqueVariations = [...new Set(allVariations)].filter(term => term.length > 1)
-    
+
+    // Case-insensitive partial match for tags via SQL (unnest + ILIKE)
+    const q = search.toLowerCase()
+    const qinfix = `%${q}%`
+    const tagIdRows = await prisma.$queryRaw<Array<{ id: string }>>`\
+      SELECT "id" FROM "products"\
+      WHERE "isActive" = true AND EXISTS (\
+        SELECT 1 FROM unnest("tags") AS t\
+        WHERE lower(t) LIKE ${qinfix}\
+      )\
+    `
+    const tagIds = tagIdRows.map(r => r.id)
+
     // Enhanced search with weighted relevance and pluralization handling
     where.OR = [
       // High priority: exact matches in name and brand
       { name: { contains: search, mode: 'insensitive' } },
       { brand: { contains: search, mode: 'insensitive' } },
-      
+
       // High priority: individual original terms in name
       ...searchTerms.map(term => ({
         name: { contains: term, mode: 'insensitive' }
       })),
-      
+
       // High priority: tag variations matching (includes pluralization and case-insensitive)
       { tags: { hasSome: uniqueVariations.map(v => v.toLowerCase()) } },
-      
+
       // Medium priority: individual variations in name (for partial matches)
       ...uniqueVariations.slice(0, 10).map(variation => ({ // Limit to first 10 variations for performance
         name: { contains: variation, mode: 'insensitive' }
       })),
-      
+
       // Medium priority: individual variations in brand
       ...uniqueVariations.slice(0, 5).map(variation => ({ // Limit for performance
         brand: { contains: variation, mode: 'insensitive' }
       })),
-      
+
       // Lower priority: description and category
       { description: { contains: search, mode: 'insensitive' } },
       { sku: { contains: search, mode: 'insensitive' } },
       { category: { name: { contains: search, mode: 'insensitive' } } },
-      
+
       // Lower priority: individual terms in description
       ...searchTerms.map(term => ({
         description: { contains: term, mode: 'insensitive' }
       })),
-      
+
       // Lower priority: tag exact matches for original terms (case-insensitive)
       ...searchTerms.map(term => ({
         tags: { has: term.toLowerCase() }
-      }))
+      })),
+
+      // New: tags case-insensitive partial matches via raw query
+      ...(tagIds.length ? [{ id: { in: tagIds } }] : [])
     ]
-    
+
     console.log(`🔍 Search enhanced: "${search}" -> variations: [${uniqueVariations.slice(0, 10).join(', ')}]`)
   }
 
@@ -304,9 +319,8 @@ export async function getProductBySlug(slug: string): Promise<ProductWithDetails
               }
             }
           },
-          orderBy: {
-            createdAt: 'desc'
-          }
+          orderBy: { createdAt: 'desc' },
+          take: 7
         },
         _count: {
           select: {
@@ -319,12 +333,18 @@ export async function getProductBySlug(slug: string): Promise<ProductWithDetails
 
     if (!product) return null
 
-    const averageRating = product.reviews.length > 0 
-      ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
-      : 0
+    // Compute average across all reviews (not just the first page)
+    const avgAgg = await prisma.review.aggregate({
+      where: { productId: product.id },
+      _avg: { rating: true }
+    })
+    const averageRating = avgAgg._avg.rating ? Number(avgAgg._avg.rating) : 0
+
+    // Omit Decimal fields like costPrice to ensure plain-object serialization
+    const { costPrice: _omitCostPrice, ...rest } = product as any
 
     return {
-      ...product,
+      ...rest,
       price: Number(product.price),
       originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
       weight: product.weight ? Number(product.weight) : null,
@@ -506,14 +526,17 @@ export async function getProductsByIds(ids: string[]): Promise<ProductWithDetail
       .map(id => products.find(product => product.id === id))
       .filter((product): product is typeof products[number] => Boolean(product))
 
-    return sortedProducts.map(product => ({
-      ...product,
-      price: Number(product.price),
-      originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
-      weight: product.weight ? Number(product.weight) : null,
-      averageRating: ratingsMap[product.id] || 0,
-      reviewCount: product._count.reviews
-    }))
+    return sortedProducts.map(product => {
+      const { costPrice: _omitCostPrice, ...rest } = product as any
+      return {
+        ...rest,
+        price: Number(product.price),
+        originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
+        weight: product.weight ? Number(product.weight) : null,
+        averageRating: ratingsMap[product.id] || 0,
+        reviewCount: product._count.reviews
+      }
+    })
   } catch (error) {
     // console.error('Error fetching products by IDs:', error)
     throw new Error('Failed to fetch products by IDs')
@@ -568,14 +591,17 @@ export async function getRelatedProducts(productId: string, categoryId: string, 
       return acc
     }, {} as Record<string, number>)
 
-    return products.map(product => ({
-      ...product,
-      price: Number(product.price),
-      originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
-      weight: product.weight ? Number(product.weight) : null,
-      averageRating: ratingsMap[product.id] || 0,
-      reviewCount: product._count.reviews
-    }))
+    return products.map(product => {
+      const { costPrice: _omitCostPrice, ...rest } = product as any
+      return {
+        ...rest,
+        price: Number(product.price),
+        originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
+        weight: product.weight ? Number(product.weight) : null,
+        averageRating: ratingsMap[product.id] || 0,
+        reviewCount: product._count.reviews
+      }
+    })
   } catch (error) {
     // console.error('Error fetching related products:', error)
     throw new Error('Failed to fetch related products')

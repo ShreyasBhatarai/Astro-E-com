@@ -11,13 +11,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { formatCurrency, formatDateTime } from '@/lib/utils'
-import { OrderWithDetails, OrderStatus } from '@/types'
+import { formatCurrency } from '@/lib/utils'
+import { OrderStatus } from '@/types'
 import { Eye, Package } from 'lucide-react'
 import Link from 'next/link'
 
+interface RecentOrderItem {
+  id: string
+  orderNumber: string
+  status: OrderStatus
+  total: number
+  userName: string
+}
+
 interface RecentOrdersTableProps {
-  orders: OrderWithDetails[]
+  orders: RecentOrderItem[]
   isLoading?: boolean
 }
 
@@ -92,7 +100,6 @@ export function RecentOrdersTable({ orders, isLoading }: RecentOrdersTableProps)
                 <TableHead>Customer</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead>Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -100,14 +107,11 @@ export function RecentOrdersTable({ orders, isLoading }: RecentOrdersTableProps)
               {orders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">
-                    #{order.orderNumber}
+                    <Link href={`/admin/orders/${order.id}`}>#{order.orderNumber}</Link>
                   </TableCell>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{order.shippingName}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {order.shippingPhone}
-                      </div>
+                      <div className="font-medium">{order.userName}</div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -117,9 +121,6 @@ export function RecentOrdersTable({ orders, isLoading }: RecentOrdersTableProps)
                   </TableCell>
                   <TableCell className="font-medium">
                     {formatCurrency(Number(order.total))}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatDateTime(order.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
@@ -145,20 +146,14 @@ export function RecentOrdersTable({ orders, isLoading }: RecentOrdersTableProps)
                   {order.status.toLowerCase()}
                 </Badge>
               </div>
-              
+
               <div className="space-y-1">
-                <div className="font-medium">{order.shippingName}</div>
-                <div className="text-sm text-muted-foreground">
-                  {order.shippingPhone}
-                </div>
+                <div className="font-medium">{order.userName}</div>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium">{formatCurrency(Number(order.total))}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {formatDateTime(order.createdAt)}
-                  </div>
                 </div>
                 <Button variant="ghost" size="sm" asChild>
                   <Link href={`/admin/orders/${order.id}`}>

@@ -59,16 +59,15 @@ export async function GET(request: NextRequest) {
         _count: { status: true }
       }),
       
-      // Recent orders (filtered by date, limited)
+      // Recent orders (filtered by date, limited) - minimal fields
       prisma.order.findMany({
         where: dateFilter,
-        include: {
-          user: { select: { name: true, email: true } },
-          orderItems: {
-            include: {
-              product: { select: { name: true } }
-            }
-          }
+        select: {
+          id: true,
+          orderNumber: true,
+          status: true,
+          total: true,
+          user: { select: { name: true } }
         },
         orderBy: { createdAt: 'desc' },
         take: 5
@@ -103,52 +102,38 @@ export async function GET(request: NextRequest) {
       percentage: totalOrders > 0 ? (item._count.status / totalOrders) * 100 : 0
     }))
 
-    // Process top products
+    // Process top products (minimal fields)
     const topProductsPromises = topProductsData.map(async (item) => {
       const product = await prisma.product.findUnique({
         where: { id: item.productId },
-        include: {
-          reviews: {
-            select: {
-              rating: true
-            }
-          }
-        }
+        select: { name: true, slug: true }
       })
-      if (product) {
-        const ratings = product.reviews.map(r => r.rating)
-        const averageRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0
-        const reviewCount = ratings.length
-        
-        return {
-          product: {
-            ...product,
-            price: Number(product.price),
-            originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
-            weight: product.weight ? Number(product.weight) : null,
-            reviews: undefined
-          },
-          totalSold: item._sum.quantity || 0,
-          revenue: Number(item._sum.price || 0),
-          averageRating: Number(averageRating.toFixed(1)),
-          reviewCount
-        }
+      if (!product) return null
+
+      const ratingAgg = await prisma.review.aggregate({
+        where: { productId: item.productId },
+        _avg: { rating: true },
+        _count: { _all: true }
+      })
+
+      return {
+        name: product.name,
+        slug: product.slug,
+        unitsSold: item._sum.quantity || 0,
+        averageRating: Number((ratingAgg._avg.rating || 0).toFixed(1)),
+        reviewCount: ratingAgg._count._all || 0
       }
-      return null
     })
 
-    const topProducts = (await Promise.all(topProductsPromises)).filter(Boolean)
+    const topProducts = (await Promise.all(topProductsPromises)).filter(Boolean) as any[]
 
-    // Convert Decimal fields to numbers for serialization
+    // Convert Decimal fields to numbers for serialization (minimal shape)
     const serializedRecentOrders = recentOrders.map(order => ({
-      ...order,
+      id: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
       total: Number(order.total),
-      subtotal: Number(order.subtotal),
-      shippingCost: Number(order.shippingCost),
-      orderItems: order.orderItems.map(item => ({
-        ...item,
-        price: Number(item.price)
-      }))
+      userName: order.user?.name || 'Guest'
     }))
 
     const metrics = {

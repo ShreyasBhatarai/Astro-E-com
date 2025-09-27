@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { Bell, ShoppingCart, User, AlertCircle, CheckCircle, Package, TrendingUp, Dot, RefreshCw } from 'lucide-react'
+import { Bell, ShoppingCart, User, AlertCircle, CheckCircle, Package, Dot, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'

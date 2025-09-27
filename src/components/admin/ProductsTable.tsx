@@ -5,7 +5,7 @@ import { Product, Category, PaginatedResponse, AdminProductFilters } from '@/typ
 import { formatCurrency } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
+
 import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -24,24 +24,9 @@ interface ProductsTableProps {
 }
 
 export function ProductsTable({ products, pagination, loading = false }: ProductsTableProps) {
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [updatingProducts, setUpdatingProducts] = useState<Set<string>>(new Set())
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedProducts(products.map(p => p.id))
-    } else {
-      setSelectedProducts([])
-    }
-  }
 
-  const handleSelectProduct = (productId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedProducts(prev => [...prev, productId])
-    } else {
-      setSelectedProducts(prev => prev.filter(id => id !== productId))
-    }
-  }
 
   const handleToggleActive = async (productId: string, currentStatus: boolean) => {
     setUpdatingProducts(prev => new Set([...prev, productId]))
@@ -109,37 +94,14 @@ export function ProductsTable({ products, pagination, loading = false }: Product
 
   return (
     <div className="bg-white rounded-lg border border-gray-200">
-      {/* Bulk Actions */}
-      {selectedProducts.length > 0 && (
-        <div className="p-4 border-b border-gray-200 bg-blue-50">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-blue-800">
-              {selectedProducts.length} product{selectedProducts.length > 1 ? 's' : ''} selected
-            </span>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                Activate
-              </Button>
-              <Button variant="outline" size="sm">
-                Deactivate
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto">
+      <div className=" overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={selectedProducts.length === products.length}
-                  onCheckedChange={handleSelectAll}
-                />
-              </TableHead>
-              <TableHead>Product</TableHead>
+              <TableHead style={{ width: '30%' }}>Product</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Stock</TableHead>
@@ -153,35 +115,29 @@ export function ProductsTable({ products, pagination, loading = false }: Product
               const stockStatus = getStockStatus(product.stock)
               return (
                 <TableRow key={product.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedProducts.includes(product.id)}
-                      onCheckedChange={(checked) => handleSelectProduct(product.id, checked as boolean)}
-                    />
-                  </TableCell>
-                  <TableCell>
+                  <TableCell style={{ width: '30%' }}>
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                      <div className="min-w-fit aspect-square bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
                         {product.images.length > 0 ? (
                           <Image
                             src={product.images[0]}
                             alt={product.name}
-                            width={48}
-                            height={48}
-                            className="object-cover"
+                            width={60}
+                            height={60}
+                            className="aspect-square object-cover"
                           />
                         ) : (
                           <Package className="h-6 w-6 text-gray-400" />
                         )}
                       </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{product.name}</div>
-                        <div className="text-sm text-gray-600">SKU: {product.sku || 'N/A'}</div>
+                      <div className="min-w-0">
+                        <div className="font-medium text-gray-900 truncate line-clamp-2 text-wrap">{product.name}</div>
+                        <div className="text-sm text-gray-600 truncate">{product.sku}</div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{product.category.name}</Badge>
+                    <Badge >{product.category.name}</Badge>
                   </TableCell>
                   <TableCell>
                     <div>
@@ -254,76 +210,7 @@ export function ProductsTable({ products, pagination, loading = false }: Product
         </Table>
       </div>
 
-      {/* Mobile Cards */}
-      <div className="md:hidden p-4 space-y-4">
-        {products.map((product) => {
-          const stockStatus = getStockStatus(product.stock)
-          return (
-            <div key={product.id} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <Checkbox
-                  checked={selectedProducts.includes(product.id)}
-                  onCheckedChange={(checked) => handleSelectProduct(product.id, checked as boolean)}
-                />
-                <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {product.images.length > 0 ? (
-                    <Image
-                      src={product.images[0]}
-                      alt={product.name}
-                      width={64}
-                      height={64}
-                      className="object-cover"
-                    />
-                  ) : (
-                    <Package className="h-8 w-8 text-gray-400" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-gray-900 truncate">{product.name}</h3>
-                  <p className="text-sm text-gray-600">SKU: {product.sku || 'N/A'}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="outline" className="text-xs">{product.category.name}</Badge>
-                    {getStatusBadge(product.isActive)}
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <div>
-                      <div className="font-medium">{formatCurrency(Number(product.price))}</div>
-                      <Badge className={`${stockStatus.color} text-xs`}>
-                        {stockStatus.status} ({product.stock})
-                      </Badge>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/admin/products/${product.id}/edit`}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/products/${product.slug}`}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            View
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+
 
       {/* Pagination */}
       <div className="p-4 border-t border-gray-200">

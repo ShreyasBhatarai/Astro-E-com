@@ -16,7 +16,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { status } = await request.json()
+    const { status, cancellationReason, failureReason } = await request.json()
     const resolvedParams = await params
     const orderId = resolvedParams.id
 
@@ -43,7 +43,10 @@ export async function PATCH(
     // Update order status
     const order = await prisma.order.update({
       where: { id: orderId },
-      data: { status },
+      data: {
+        status,
+        reason: status === 'CANCELLED' ? (cancellationReason || null) : (status === 'FAILED' ? (failureReason || null) : null)
+      },
       include: {
         user: true,
         orderItems: {
@@ -114,7 +117,8 @@ export async function PATCH(
           userName: customerName,
           orderNumber: order.orderNumber,
           status: status,
-          orderTotal: Number(order.total)
+          orderTotal: Number(order.total),
+          reason: status === 'CANCELLED' ? (cancellationReason || undefined) : (status === 'FAILED' ? (failureReason || undefined) : undefined)
         })
         console.log(`✅ Order status email sent to ${customerEmail} for order ${order.orderNumber}`)
       } catch (emailError) {

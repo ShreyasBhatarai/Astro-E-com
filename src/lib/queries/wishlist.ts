@@ -36,19 +36,30 @@ export async function getUserWishlist(userId: string): Promise<ProductWithDetail
       }
     })
 
+    const productIds = wishlistItems.map((w) => w.product.id)
+    const ratings = productIds.length > 0 ? await prisma.review.groupBy({
+      by: ['productId'],
+      where: { productId: { in: productIds } },
+      _avg: { rating: true },
+      _count: { rating: true }
+    }) : []
+
     return wishlistItems.map(item => {
       const product = item.product
+      const ratingInfo = ratings.find(r => r.productId === product.id)
+      const averageRating = ratingInfo? Number((ratingInfo._avg.rating || 0).toFixed(1)) : 0
+      const reviewCount = ratingInfo? ratingInfo._count.rating : product._count.reviews
       return {
         ...product,
         price: Number(product.price),
         originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
         reviews: [], // Empty array to satisfy type
         _count: {
-          reviews: product._count.reviews,
+          reviews: reviewCount,
           wishlist: 0
         },
-        averageRating: 0, // Not calculated for wishlist to optimize performance
-        reviewCount: product._count.reviews
+        averageRating,
+        reviewCount
       }
     }) as any
   } catch (error) {

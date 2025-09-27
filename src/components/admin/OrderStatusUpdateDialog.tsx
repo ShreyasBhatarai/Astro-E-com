@@ -3,16 +3,19 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
 } from '@/components/ui/alert-dialog'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
+
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { OrderStatus } from '@/types'
@@ -38,24 +41,43 @@ export function OrderStatusUpdateDialog({ orderId, currentStatus, onStatusChange
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [reason, setReason] = useState('')
+  const [isReasonOpen, setIsReasonOpen] = useState(false)
+
 
   const handleStatusSelect = (status: OrderStatus) => {
     if (status === currentStatus) return
     setSelectedStatus(status)
-    setIsDialogOpen(true)
+    if (status === 'CANCELLED' || status === 'FAILED') {
+      setReason('')
+      setIsReasonOpen(true)
+    } else {
+      setIsDialogOpen(true)
+    }
   }
 
   const handleConfirmUpdate = async () => {
     if (!selectedStatus) return
-    
+
+    // Require reason when cancelling or failing
+    if ((selectedStatus === 'CANCELLED' || selectedStatus === 'FAILED') && !reason.trim()) {
+      toast.error('Please provide a reason for this status change')
+      setIsReasonOpen(true)
+      return
+    }
+
     setIsUpdating(true)
     try {
-      const response = await fetch(`/api/admin/orders/${orderId}/status`, {
-        method: 'PATCH',
+      const body: any = { status: selectedStatus }
+      if (selectedStatus === 'CANCELLED') body.cancellationReason = reason
+      if (selectedStatus === 'FAILED') body.failureReason = reason
+
+      const response = await fetch(`/api/admin/orders/${orderId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: selectedStatus })
+        body: JSON.stringify(body)
       })
 
       if (!response.ok) {
@@ -67,26 +89,26 @@ export function OrderStatusUpdateDialog({ orderId, currentStatus, onStatusChange
         toast.success(`Order status updated to ${selectedStatus}`)
         onStatusChange?.(selectedStatus)
         router.refresh()
-        // Close dialog only after success
         setIsDialogOpen(false)
+        setIsReasonOpen(false)
         setSelectedStatus(null)
+        setReason('')
       } else {
         throw new Error(result.error || 'Failed to update order status')
       }
     } catch (error) {
-      // console.error('Error updating order status:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to update order status')
-      // Don't close dialog on error, let user try again or cancel manually
     } finally {
       setIsUpdating(false)
-      // Only close dialog on success - if there was an error, let user try again
     }
   }
 
   const handleCancel = () => {
     if (!isUpdating) {
       setIsDialogOpen(false)
+      setIsReasonOpen(false)
       setSelectedStatus(null)
+      setReason('')
     }
   }
 
@@ -115,6 +137,48 @@ export function OrderStatusUpdateDialog({ orderId, currentStatus, onStatusChange
                 {option.label}
               </SelectItem>
             ))}
+      {/* Reason Dialog */}
+      <Dialog open={isReasonOpen} onOpenChange={(open) => { if (!isUpdating) setIsReasonOpen(open) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedStatus === 'CANCELLED' ? 'Cancellation Reason' : 'Failure Reason'}</DialogTitle>
+            <DialogDescription>Please provide a brief reason for this status change.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Reason *</label>
+            <Textarea
+              placeholder={`Please provide a reason for ${selectedStatus?.toLowerCase()} this order...`}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setIsReasonOpen(false)}
+              disabled={isUpdating}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                if (!reason.trim()) {
+                  toast.error('Please provide a reason')
+                  return
+                }
+                setIsReasonOpen(false)
+                setIsDialogOpen(true)
+              }}
+              disabled={isUpdating || !reason.trim()}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+            >
+              Continue
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
           </SelectContent>
         </Select>
       </div>
@@ -125,15 +189,21 @@ export function OrderStatusUpdateDialog({ orderId, currentStatus, onStatusChange
             <AlertDialogTitle>Confirm Status Update</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to change the order status from <strong>{currentStatus}</strong> to <strong>{selectedStatus}</strong>?
+              {(selectedStatus === 'CANCELLED' || selectedStatus === 'FAILED') && reason.trim() && (
+                <>
+                  <br />
+                  <span className="block mt-2">Reason: {reason}</span>
+                </>
+              )}
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={(e) => {
                 e.preventDefault()
                 handleCancel()
-              }} 
+              }}
               disabled={isUpdating}
             >
               Cancel

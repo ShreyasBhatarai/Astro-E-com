@@ -25,6 +25,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
     ...productData,
     price: Number(productData.price),
     originalPrice: productData.originalPrice ? Number(productData.originalPrice) : null,
+    costPrice: productData.costPrice ? Number(productData.costPrice) : null,
     weight: productData.weight ? Number(productData.weight) : null
   }
 

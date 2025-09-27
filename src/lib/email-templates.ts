@@ -233,6 +233,7 @@ export function getOrderStatusEmailTemplate(data: {
   orderNumber: string
   status: string
   orderTotal: number
+  reason?: string
 }): string {
   const currentDate = new Date().toLocaleDateString('en-US', { 
     year: 'numeric', 
@@ -369,9 +370,15 @@ export function getOrderStatusEmailTemplate(data: {
                     line-height: 1.6;
                   "
                 >
-                  Your order #${data.orderNumber} status has been updated. 
+                  Your order #${data.orderNumber} status has been updated.
                   ${statusMessages[data.status as keyof typeof statusMessages]}
                 </p>
+
+                ${['CANCELLED','FAILED'].includes(data.status) && data.reason ? `
+                  <p style="margin: 0; margin-top: 12px; font-weight: 500; color: #ef4444;">
+                    Reason: ${data.reason}
+                  </p>
+                ` : ''}
                 
                 <div
                   style="

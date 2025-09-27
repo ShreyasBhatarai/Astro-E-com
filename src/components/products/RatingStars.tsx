@@ -41,9 +41,9 @@ export function RatingStars({
   return (
     <div className={cn('flex items-center gap-0.5', className)}>
       {[1, 2, 3, 4, 5].map((star) => {
-        const isFilled = star <= Math.floor(rating)
-        const isHalfFilled = star === Math.ceil(rating) && rating % 1 !== 0
-        
+        const rounded = Math.round(rating)
+        const isFilled = star <= rounded
+
         return (
           <button
             key={star}
@@ -63,22 +63,11 @@ export function RatingStars({
               className={cn(
                 sizeClasses[size],
                 'transition-colors',
-                isFilled || isHalfFilled
+                isFilled
                   ? 'text-yellow-400 fill-yellow-400'
                   : 'text-gray-300'
               )}
             />
-            {isHalfFilled && (
-              <div className="absolute inset-0 overflow-hidden">
-                <Star
-                  className={cn(
-                    sizeClasses[size],
-                    'text-yellow-400 fill-yellow-400'
-                  )}
-                  style={{ clipPath: 'inset(0 50% 0 0)' }}
-                />
-              </div>
-            )}
           </button>
         )
       })}

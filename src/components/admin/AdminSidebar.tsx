@@ -28,7 +28,7 @@ const navigation = [
   { name: 'Banners', href: '/admin/banners', icon: Image },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Users', href: '/admin/users', icon: Users },
-  { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 

@@ -37,13 +37,18 @@ export async function GET(request: NextRequest) {
       status: statusParam && statusParam !== 'all' ? statusParam as 'active' | 'inactive' : undefined,
       isFeatured: isFeaturedParam && isFeaturedParam !== 'all' ? isFeaturedParam === 'true' : undefined,
       search: searchParams.get('search') || undefined,
-      sortBy: (searchParams.get('sortBy') as 'name' | 'price' | 'stock' | 'createdAt') || 'createdAt',
-      sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
+      sortBy: (searchParams.get('sortBy') as 'name' | 'price' | 'stock' | 'createdAt') || 'name',
+      sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc'
     }
-    
+
     console.log('Admin products API filters:', filters)
 
-    const result = await getAdminProducts(filters)
+    // Disallow "newest first" (createdAt-desc). Coerce to a supported default.
+    const safeFilters: AdminProductFilters = (filters.sortBy === 'createdAt' && filters.sortOrder === 'desc')
+      ? { ...filters, sortBy: 'name', sortOrder: 'asc' }
+      : filters
+
+    const result = await getAdminProducts(safeFilters)
 
     return NextResponse.json(result as AdminApiResponse)
   } catch (error) {
@@ -69,8 +74,8 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     
-    // Validate required fields
-    const requiredFields = ['name', 'description', 'price', 'stock', 'categoryId']
+    // Validate required fields (schema requires these non-null)
+    const requiredFields = ['name', 'description', 'price', 'originalPrice', 'costPrice', 'stock', 'categoryId', 'brand', 'weight']
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json(
@@ -99,13 +104,14 @@ export async function POST(request: NextRequest) {
       name: body.name,
       description: body.description,
       price: body.price,
-      originalPrice: body.originalPrice || undefined,
+      originalPrice: body.originalPrice,
+      costPrice: body.costPrice,
       sku: body.sku || undefined,
       stock: body.stock,
       images: body.images || [],
       categoryId: body.categoryId,
-      brand: body.brand || undefined,
-      weight: body.weight || undefined,
+      brand: body.brand,
+      weight: body.weight,
       dimensions: body.dimensions || undefined,
       specifications: body.specifications || undefined,
       isActive: body.isActive !== undefined ? body.isActive : true,

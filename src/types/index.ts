@@ -4,7 +4,7 @@ import { User, Product, Order, OrderItem, Review, Wishlist, Banner, Category, Or
 export type { User, Product, Order, OrderItem, Review, Wishlist, Banner, Category }
 
 // Extended types with relations
-export interface ProductWithDetails extends Omit<Product, 'price' | 'originalPrice' | 'weight'> {
+export interface ProductWithDetails extends Omit<Product, 'price' | 'originalPrice' | 'costPrice' | 'weight'> {
   price: number
   originalPrice: number | null
   weight: number | null
@@ -260,7 +260,14 @@ export interface AdminDashboardMetrics {
   totalOrders: number
   totalRevenue: number
   avgOrderValue: number
-  recentOrders: OrderWithDetails[]
+  // Optimized shapes for dashboard widgets
+  recentOrders: {
+    id: string
+    orderNumber: string
+    status: OrderStatus
+    total: number
+    userName: string
+  }[]
   orderStatusDistribution: {
     status: OrderStatus
     count: number
@@ -271,14 +278,11 @@ export interface AdminDashboardMetrics {
     revenue: number
   }[]
   topProducts: {
-    product: {
-      id: string
-      name: string
-      price: number
-      images: string[]
-    }
-    totalSold: number
-    revenue: number
+    name: string
+    slug: string
+    unitsSold: number
+    averageRating: number
+    reviewCount: number
   }[]
 }
 
@@ -344,6 +348,7 @@ export interface CreateProductData {
   description: string
   price: number
   originalPrice?: number
+  costPrice?: number
   sku?: string
   stock: number
   images: string[]
@@ -362,6 +367,7 @@ export interface UpdateProductData {
   description?: string
   price?: number
   originalPrice?: number
+  costPrice?: number
   sku?: string
   stock?: number
   images?: string[]
@@ -380,6 +386,7 @@ export interface ProductFormData {
   description: string
   price: number
   originalPrice?: number
+  costPrice?: number
   sku?: string
   stock: number
   images: File[] | string[]
