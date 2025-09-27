@@ -9,6 +9,7 @@ import { useWishlist } from '@/contexts/WishlistContext'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Thumbs } from 'swiper/modules'
 import type { Swiper as SwiperType } from 'swiper'
@@ -27,17 +28,18 @@ interface ProductImageGalleryProps {
 export function ProductImageGallery({ images, productName, productId, className }: ProductImageGalleryProps) {
   const { data: session } = useSession()
   const router = useRouter()
+
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null)
   const [isAddingToWishlist, setIsAddingToWishlist] = useState(false)
-  
+
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
   const isProductInWishlist = isInWishlist(productId)
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    
-    // Check if user is authenticated
+
+    // Require login for wishlist
     if (!session) {
       toast.info('Please sign in to add items to wishlist', {
         description: 'You will be redirected to the login page',
@@ -47,12 +49,10 @@ export function ProductImageGallery({ images, productName, productId, className 
         },
         duration: 4000,
       })
-      
-      // Redirect to login with return URL
       router.push(`/login?callbackUrl=${encodeURIComponent(window.location.href)}`)
       return
     }
-    
+
     setIsAddingToWishlist(true)
     try {
       if (isProductInWishlist) {
@@ -142,17 +142,17 @@ export function ProductImageGallery({ images, productName, productId, className 
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-3 right-3 h-10 w-10 bg-white/95 hover:bg-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-20"
+          className="absolute top-3 right-3 h-10 w-10 bg-white/95 hover:bg-white shadow-lg opacity-100 z-20"
           onClick={handleWishlistToggle}
           disabled={isAddingToWishlist}
         >
-          <Heart 
+          <Heart
             className={cn(
               "h-5 w-5 transition-colors",
-              isProductInWishlist 
-                ? "text-red-500 fill-red-500" 
+              isProductInWishlist
+                ? "text-red-500 fill-red-500"
                 : "text-gray-600 hover:text-red-500"
-            )} 
+            )}
           />
         </Button>
 

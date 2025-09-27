@@ -88,8 +88,8 @@ export async function addToWishlist(userId: string, productId: string): Promise<
       }
     }
 
-    // Verify product exists and is active
-    const product = await prisma.product.findUnique({
+    // Verify product exists and is active (use findFirst because isActive is not part of unique index)
+    const product = await prisma.product.findFirst({
       where: {
         id: productId,
         isActive: true

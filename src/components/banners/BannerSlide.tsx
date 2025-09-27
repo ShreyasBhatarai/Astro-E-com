@@ -10,13 +10,14 @@ interface BannerSlideProps {
 
 export function BannerSlide({ banner, className = '' }: BannerSlideProps) {
   const handleClick = () => {
+    const url = banner.redirectUrl || '#'
     // Open in new tab for external links, same tab for internal links
-    const isExternal = banner.redirectUrl.startsWith('http') && !banner.redirectUrl.includes(window.location.hostname)
-    
+    const isExternal = url.startsWith('http') && !url.includes(window.location.hostname)
+
     if (isExternal) {
-      window.open(banner.redirectUrl, '_blank', 'noopener,noreferrer')
-    } else {
-      window.location.href = banner.redirectUrl
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } else if (url !== '#') {
+      window.location.href = url
     }
   }
 
@@ -37,12 +38,12 @@ export function BannerSlide({ banner, className = '' }: BannerSlideProps) {
       {/* Banner Image */}
       <div className="relative w-full h-full overflow-hidden rounded-lg">
         <Image
-          src={banner.image}
+          src={banner.image || '/placeholder-banner.jpg'}
           alt={`Banner ${banner.position}`}
           fill
           className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
-          priority={banner.position <= 2} // Prioritize first 2 banners
+          priority={banner.position <= 2}
         />
         
         {/* Overlay for better text readability if needed */}

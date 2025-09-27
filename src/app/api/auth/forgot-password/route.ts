@@ -14,8 +14,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() }
+    const normalizedEmail = email.trim().toLowerCase()
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: normalizedEmail, mode: 'insensitive' } }
     })
 
     // Return error if email doesn't exist (as requested by user)

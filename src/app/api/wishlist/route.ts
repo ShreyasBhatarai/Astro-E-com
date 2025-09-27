@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       const response: ApiResponse<null> = {
         success: false,
         data: null,
@@ -17,8 +17,22 @@ export async function GET(request: NextRequest) {
       }
       return NextResponse.json(response, { status: 401 })
     }
-    
-    const userId = session.user.id
+
+    const dbUser = await prisma.user.findFirst({
+      where: { email: { equals: session.user.email, mode: 'insensitive' } },
+      select: { id: true }
+    })
+
+    if (!dbUser) {
+      const response: ApiResponse<null> = {
+        success: false,
+        data: null,
+        message: 'Authentication required'
+      }
+      return NextResponse.json(response, { status: 401 })
+    }
+
+    const userId = dbUser.id
     const { searchParams } = new URL(request.url)
     const countOnly = searchParams.get('countOnly') === 'true'
 
@@ -63,7 +77,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       const response: ApiResponse<null> = {
         success: false,
         data: null,
@@ -71,8 +85,22 @@ export async function POST(request: NextRequest) {
       }
       return NextResponse.json(response, { status: 401 })
     }
-    
-    const userId = session.user.id
+
+    const dbUser = await prisma.user.findFirst({
+      where: { email: { equals: session.user.email, mode: 'insensitive' } },
+      select: { id: true }
+    })
+
+    if (!dbUser) {
+      const response: ApiResponse<null> = {
+        success: false,
+        data: null,
+        message: 'Authentication required'
+      }
+      return NextResponse.json(response, { status: 401 })
+    }
+
+    const userId = dbUser.id
     const body = await request.json()
     const { productId } = body
 
@@ -87,7 +115,7 @@ export async function POST(request: NextRequest) {
 
     const result = await addToWishlist(userId, productId)
 
-    return NextResponse.json(result)
+    return NextResponse.json(result, { status: result.success ? 200 : 400 })
   } catch (error) {
     // console.error('Error adding to wishlist:', error)
     
@@ -105,7 +133,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       const response: ApiResponse<null> = {
         success: false,
         data: null,
@@ -113,8 +141,22 @@ export async function DELETE(request: NextRequest) {
       }
       return NextResponse.json(response, { status: 401 })
     }
-    
-    const userId = session.user.id
+
+    const dbUser = await prisma.user.findFirst({
+      where: { email: { equals: session.user.email, mode: 'insensitive' } },
+      select: { id: true }
+    })
+
+    if (!dbUser) {
+      const response: ApiResponse<null> = {
+        success: false,
+        data: null,
+        message: 'Authentication required'
+      }
+      return NextResponse.json(response, { status: 401 })
+    }
+
+    const userId = dbUser.id
     
     // Check if request has a body
     const contentLength = request.headers.get('content-length')
@@ -133,12 +175,12 @@ export async function DELETE(request: NextRequest) {
     if (!productId) {
       // Clear entire wishlist
       const result = await clearWishlist(userId)
-      return NextResponse.json(result, { status: 200 })
+      return NextResponse.json(result, { status: result.success ? 200 : 400 })
     }
 
     // Remove specific product
     const result = await removeFromWishlist(userId, productId)
-    return NextResponse.json(result, { status: 200 })
+    return NextResponse.json(result, { status: result.success ? 200 : 400 })
   } catch (error) {
     // console.error('Error removing from wishlist:', error)
     

@@ -39,23 +39,20 @@ export function AddToCartButton({
   const handleAddToCart = async () => {
     if (isOutOfStock) return
     
-    // For guest users, allow adding to cart without authentication
-    // The cart context will handle guest cart storage
-    // if (!session) {
-    //   toast.info('Please sign in to add items to cart', {
-    //     description: 'You will be redirected to the login page',
-    //     action: {
-    //       label: 'Sign In',
-    //       onClick: () => router.push('/login')
-    //     },
-    //     duration: 4000,
-    //   })
-    //   
-    //   // Redirect to login with return URL
-    //   router.push(`/login?callbackUrl=${encodeURIComponent(window.location.href)}`)
-    //   return
-    // }
-    
+    // Require login for cart
+    if (!session) {
+      toast.info('Please sign in to add items to cart', {
+        description: 'You will be redirected to the login page',
+        action: {
+          label: 'Sign In',
+          onClick: () => router.push('/login')
+        },
+        duration: 4000,
+      })
+      router.push(`/login?callbackUrl=${encodeURIComponent(window.location.href)}`)
+      return
+    }
+
     setIsAdding(true)
     try {
       const success = await addItem({
@@ -77,8 +74,13 @@ export function AddToCartButton({
           },
           duration: 3000,
         })
+      } else {
+        toast.error('Failed to add item to cart', {
+          description: 'Please try again',
+          duration: 3000,
+        })
       }
-      
+
       setJustAdded(true)
       setTimeout(() => setJustAdded(false), 2000)
     } catch (error) {

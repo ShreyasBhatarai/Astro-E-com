@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       sort: searchParams.get('sort') || 'createdAt',
       order: (searchParams.get('order') as 'asc' | 'desc') || 'desc',
       page: sanitizeNumber(searchParams.get('page'), 1, 1, 1000),
-      limit: sanitizeNumber(searchParams.get('limit'), 12, 1, 50),
+      limit: sanitizeNumber(searchParams.get('limit'), 12, 12, 50),
       rating: sanitizeOptionalNumber(searchParams.get('rating'), 1, 5),
       brand: searchParams.get('brand') || ''
     }

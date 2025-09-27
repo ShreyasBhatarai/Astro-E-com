@@ -59,6 +59,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     sort: params.sort || 'createdAt',
     order: (params.order as 'asc' | 'desc') || 'desc',
     page: params.page ? Number(params.page) : 1,
+    limit: params.isFeatured === 'true' ? 20 : 12,
     rating: params.rating ? Number(params.rating) : undefined,
     brand: params.brand || '',
     inStock: params.inStock === 'true' ? true : undefined,

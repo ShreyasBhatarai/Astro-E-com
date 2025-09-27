@@ -12,9 +12,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { email } = sendOtpSchema.parse(body)
 
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { email },
+    // Check if user exists (case-insensitive)
+    const normalizedEmail = email.trim().toLowerCase()
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: normalizedEmail, mode: 'insensitive' } },
       select: { id: true, name: true, emailVerified: true }
     })
 

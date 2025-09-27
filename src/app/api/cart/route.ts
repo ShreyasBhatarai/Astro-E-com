@@ -7,29 +7,31 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     const { searchParams } = new URL(request.url)
-    const sessionId = searchParams.get('sessionId')
     const countOnly = searchParams.get('countOnly') === 'true'
+
+    if (!session?.user?.email) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 })
+    }
+
+    const dbUser = await prisma.user.findFirst({
+      where: { email: { equals: session.user.email, mode: 'insensitive' } },
+      select: { id: true }
+    })
+
+    if (!dbUser) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 })
+    }
+
+    const userId = dbUser.id
 
     // If only count is requested, optimize the query
     if (countOnly) {
-      let totalItems = 0
-      
-      if (session?.user?.id) {
-        // For authenticated users, count from database
-        const cartItemsSum = await prisma.cartItem.aggregate({
-          where: { userId: session.user.id },
-          _sum: { quantity: true }
-        })
-        totalItems = cartItemsSum._sum.quantity || 0
-      } else if (sessionId) {
-        // For guest users, count from database using sessionId
-        const cartItemsSum = await prisma.cartItem.aggregate({
-          where: { sessionId },
-          _sum: { quantity: true }
-        })
-        totalItems = cartItemsSum._sum.quantity || 0
-      }
-      
+      const cartItemsSum = await prisma.cartItem.aggregate({
+        where: { userId },
+        _sum: { quantity: true }
+      })
+      const totalItems = cartItemsSum._sum.quantity || 0
+
       return NextResponse.json({
         success: true,
         totalItems,
@@ -37,63 +39,31 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    let cartItems: any[] = []
-
-    if (session?.user?.id) {
-      // For authenticated users, get from database
-      const dbCartItems = await prisma.cartItem.findMany({
-        where: { userId: session.user.id },
-        include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              price: true,
-              images: true,
-              slug: true,
-              stock: true
-            }
+    const dbCartItems = await prisma.cartItem.findMany({
+      where: { userId },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            images: true,
+            slug: true,
+            stock: true
           }
         }
-      })
+      }
+    })
 
-      cartItems = dbCartItems.map(item => ({
-        productId: item.product.id,
-        name: item.product.name,
-        price: Number(item.product.price),
-        image: item.product.images[0] || '',
-        slug: item.product.slug,
-        quantity: item.quantity,
-        stock: item.product.stock
-      }))
-    } else if (sessionId) {
-      // For guest users, get from database using sessionId
-      const dbCartItems = await prisma.cartItem.findMany({
-        where: { sessionId },
-        include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              price: true,
-              images: true,
-              slug: true,
-              stock: true
-            }
-          }
-        }
-      })
-
-      cartItems = dbCartItems.map(item => ({
-        productId: item.product.id,
-        name: item.product.name,
-        price: Number(item.product.price),
-        image: item.product.images[0] || '',
-        slug: item.product.slug,
-        quantity: item.quantity,
-        stock: item.product.stock
-      }))
-    }
+    const cartItems: any[] = dbCartItems.map(item => ({
+      productId: item.product.id,
+      name: item.product.name,
+      price: Number(item.product.price),
+      image: item.product.images[0] || '',
+      slug: item.product.slug,
+      quantity: item.quantity,
+      stock: item.product.stock
+    }))
 
     const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
     const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0)
@@ -118,10 +88,23 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    const { searchParams } = new URL(request.url)
-    const sessionId = searchParams.get('sessionId')
     const body = await request.json()
     const { productId, quantity = 1 } = body
+
+    if (!session?.user?.email) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 })
+    }
+
+    const dbUser = await prisma.user.findFirst({
+      where: { email: { equals: session.user.email, mode: 'insensitive' } },
+      select: { id: true }
+    })
+
+    if (!dbUser) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 })
+    }
+
+    const userId = dbUser.id
 
     if (!productId) {
       return NextResponse.json(
@@ -130,11 +113,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if product exists and is active
-    const product = await prisma.product.findUnique({
-      where: { 
+    // Check if product exists and is active (use findFirst because isActive is not part of unique index)
+    const product = await prisma.product.findFirst({
+      where: {
         id: productId,
-        isActive: true 
+        isActive: true
       }
     })
 
@@ -145,66 +128,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let cartItem
-
-    if (session?.user?.id) {
-      // For authenticated users
-      cartItem = await prisma.cartItem.upsert({
-        where: {
-          userId_productId: {
-            userId: session.user.id,
-            productId
-          }
-        },
-        update: {
-          quantity: {
-            increment: quantity
-          }
-        },
-        create: {
-          userId: session.user.id,
-          productId,
-          quantity
+    // Authenticated users only
+    await prisma.cartItem.upsert({
+      where: {
+        userId_productId: {
+          userId,
+          productId
         }
-      })
-    } else if (sessionId) {
-      // For guest users
-      await prisma.cartItem.upsert({
-        where: {
-          sessionId_productId: {
-            sessionId,
-            productId
-          }
-        },
-        update: {
-          quantity: {
-            increment: quantity
-          }
-        },
-        create: {
-          sessionId,
-          productId,
-          quantity
+      },
+      update: {
+        quantity: {
+          increment: quantity
         }
-      })
-    } else {
-      return NextResponse.json(
-        { success: false, error: 'Session ID required for guests' },
-        { status: 400 }
-      )
-    }
+      },
+      create: {
+        userId,
+        productId,
+        quantity
+      }
+    })
 
     // Get updated cart
-    const cartItems = await (session?.user?.id 
-      ? prisma.cartItem.findMany({
-          where: { userId: session.user.id },
-          include: { product: true }
-        })
-      : prisma.cartItem.findMany({
-          where: { sessionId },
-          include: { product: true }
-        })
-    )
+    const cartItems = await prisma.cartItem.findMany({
+      where: { userId },
+      include: { product: true }
+    })
 
     const formattedItems = cartItems.map(item => ({
       productId: item.product.id,
@@ -239,10 +187,23 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    const { searchParams } = new URL(request.url)
-    const sessionId = searchParams.get('sessionId')
     const body = await request.json()
     const { productId, quantity } = body
+
+    if (!session?.user?.email) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 })
+    }
+
+    const dbUser = await prisma.user.findFirst({
+      where: { email: { equals: session.user.email, mode: 'insensitive' } },
+      select: { id: true }
+    })
+
+    if (!dbUser) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 })
+    }
+
+    const userId = dbUser.id
 
     if (!productId || quantity < 0) {
       return NextResponse.json(
@@ -253,61 +214,32 @@ export async function PUT(request: NextRequest) {
 
     if (quantity === 0) {
       // Remove item
-      if (session?.user?.id) {
-        await prisma.cartItem.delete({
-          where: {
-            userId_productId: {
-              userId: session.user.id,
-              productId
-            }
+      await prisma.cartItem.delete({
+        where: {
+          userId_productId: {
+            userId,
+            productId
           }
-        })
-      } else if (sessionId) {
-        await prisma.cartItem.delete({
-          where: {
-            sessionId_productId: {
-              sessionId,
-              productId
-            }
-          }
-        })
-      }
+        }
+      })
     } else {
       // Update quantity
-      if (session?.user?.id) {
-        await prisma.cartItem.update({
-          where: {
-            userId_productId: {
-              userId: session.user.id,
-              productId
-            }
-          },
-          data: { quantity }
-        })
-      } else if (sessionId) {
-        await prisma.cartItem.update({
-          where: {
-            sessionId_productId: {
-              sessionId,
-              productId
-            }
-          },
-          data: { quantity }
-        })
-      }
+      await prisma.cartItem.update({
+        where: {
+          userId_productId: {
+            userId,
+            productId
+          }
+        },
+        data: { quantity }
+      })
     }
 
     // Get updated cart
-    const cartItems = await (session?.user?.id 
-      ? prisma.cartItem.findMany({
-          where: { userId: session.user.id },
-          include: { product: true }
-        })
-      : prisma.cartItem.findMany({
-          where: { sessionId },
-          include: { product: true }
-        })
-    )
+    const cartItems = await prisma.cartItem.findMany({
+      where: { userId },
+      include: { product: true }
+    })
 
     const formattedItems = cartItems.map(item => ({
       productId: item.product.id,
@@ -342,18 +274,23 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    const { searchParams } = new URL(request.url)
-    const sessionId = searchParams.get('sessionId')
 
-    if (session?.user?.id) {
-      await prisma.cartItem.deleteMany({
-        where: { userId: session.user.id }
-      })
-    } else if (sessionId) {
-      await prisma.cartItem.deleteMany({
-        where: { sessionId }
-      })
+    if (!session?.user?.email) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 })
     }
+
+    const dbUser = await prisma.user.findFirst({
+      where: { email: { equals: session.user.email, mode: 'insensitive' } },
+      select: { id: true }
+    })
+
+    if (!dbUser) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 })
+    }
+
+    await prisma.cartItem.deleteMany({
+      where: { userId: dbUser.id }
+    })
 
     return NextResponse.json({
       success: true,

@@ -42,6 +42,8 @@ export function ProductsPageClient({
       if (filters.sort) params.append('sort', filters.sort)
       if (filters.order) params.append('order', filters.order)
       if (filters.page) params.append('page', filters.page.toString())
+      const perPage = filters.isFeatured ? 20 : (filters.limit ?? 12)
+      params.append('limit', perPage.toString())
       if (filters.rating) params.append('rating', filters.rating.toString())
       if (filters.brand) params.append('brand', filters.brand)
       if (filters.inStock) params.append('inStock', 'true')

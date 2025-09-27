@@ -12,14 +12,16 @@ import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
+
 interface ProductCardProps {
   product: ProductWithDetails
   className?: string
 }
 
 export function ProductCard({ product, className }: ProductCardProps) {
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const router = useRouter()
+
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
 
   
@@ -33,13 +35,8 @@ export function ProductCard({ product, className }: ProductCardProps) {
     e.preventDefault()
     e.stopPropagation()
     
-    // Check if session is still loading
-    if (status === 'loading') {
-      return
-    }
-    
-    // Check if user is authenticated
-    if (status === 'unauthenticated' || !session) {
+    // Require login for wishlist
+    if (!session) {
       toast.info('Please sign in to add items to wishlist', {
         description: 'You will be redirected to the login page',
         action: {
@@ -48,8 +45,6 @@ export function ProductCard({ product, className }: ProductCardProps) {
         },
         duration: 4000,
       })
-      
-      // Redirect to login with return URL
       router.push(`/login?callbackUrl=${encodeURIComponent(window.location.href)}`)
       return
     }
@@ -156,11 +151,11 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
           {/* Price */}
           <div className="flex items-center gap-2">
-            <span className="font-medium text-lg text-gray-900">
+            <span className=" text-md md:text-lg text-gray-900 font-normal">
               {formatCurrency(product.price)}
             </span>
             {product.originalPrice && product.originalPrice > product.price && (
-              <span className="text-sm text-gray-400 line-through font-normal">
+              <span className="text-xs md:text-sm text-gray-400 line-through font-light">
                 {formatCurrency(product.originalPrice)}
               </span>
             )}

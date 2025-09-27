@@ -20,9 +20,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find user with the email and reset token
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() }
+    // Find user with the email and reset token (case-insensitive)
+    const normalizedEmail = email.trim().toLowerCase()
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: normalizedEmail, mode: 'insensitive' } }
     })
 
     if (!user) {

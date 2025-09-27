@@ -26,10 +26,10 @@ export async function POST(request: NextRequest) {
     const { productId, rating, title, comment } = createReviewSchema.parse(body)
 
     // Check if product exists and is active
-    const product = await prisma.product.findUnique({
-      where: { 
+    const product = await prisma.product.findFirst({
+      where: {
         id: productId,
-        isActive: true 
+        isActive: true
       }
     })
 

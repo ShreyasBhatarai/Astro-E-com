@@ -47,8 +47,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound()
   }
 
-  // Fetch related products
-  const relatedProducts = await getRelatedProducts(product.id, product.categoryId, 5)
+  // Fetch related products (show up to 12 recommendations)
+  const relatedProducts = await getRelatedProducts(product.id, product.categoryId, 12)
 
   return (
     <div className="bg-white">
@@ -135,7 +135,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         {/* Similar Products */}
         <div>
           <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl md:text-3xl font-light text-gray-900 mb-2">
               Recommended Similar Products
             </h2>
             <p className="text-gray-600">
@@ -144,7 +144,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
           
           {relatedProducts.length > 0 ? (
-            <ProductGrid products={relatedProducts} />
+            <ProductGrid products={relatedProducts} variant="homepage" />
           ) : (
             <div className="text-center py-16">
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">

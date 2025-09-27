@@ -102,36 +102,27 @@ export function WishlistProvider({ children, initialWishlist = [] }: Omit<Wishli
 
   const addToWishlist = async (productId: string): Promise<boolean> => {
     if (isInWishlist(productId)) return true
+    if (!userId) return false
 
     setIsLoading(true)
     try {
-      if (userId) {
-        // Authenticated user - call API
-        const response = await fetch('/api/wishlist', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ productId }),
-        })
+      const response = await fetch('/api/wishlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productId }),
+      })
 
-        if (response.ok) {
-          setWishlistIds(prev => [...prev, productId])
-          setWishlistCount(prev => prev + 1)
-          return true
-        }
-        return false
-      } else {
-        // Guest user - use localStorage
-        const success = guestWishlist.add(productId)
-        if (success) {
-          setWishlistIds(prev => [...prev, productId])
-          setWishlistCount(prev => prev + 1)
-        }
-        return success
+      if (!response.ok) return false
+      const data = await response.json()
+      const success = Boolean(data?.success)
+      if (success) {
+        setWishlistIds(prev => [...prev, productId])
+        setWishlistCount(prev => prev + 1)
       }
+      return success
     } catch (error) {
-      // console.error('Error adding to wishlist:', error)
       return false
     } finally {
       setIsLoading(false)
@@ -139,37 +130,27 @@ export function WishlistProvider({ children, initialWishlist = [] }: Omit<Wishli
   }
 
   const removeFromWishlist = async (productId: string): Promise<boolean> => {
+    if (!userId) return false
     setIsLoading(true)
     try {
-      if (userId) {
-        // Authenticated user - call API
-        const response = await fetch('/api/wishlist', {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ productId }),
-        })
+      const response = await fetch('/api/wishlist', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productId }),
+      })
 
-        if (response.ok) {
-          setWishlistIds(prev => prev.filter(id => id !== productId))
-          setWishlist(prev => prev.filter(item => item.id !== productId))
-          setWishlistCount(prev => Math.max(0, prev - 1))
-          return true
-        }
-        return false
-      } else {
-        // Guest user - use localStorage
-        const success = guestWishlist.remove(productId)
-        if (success) {
-          setWishlistIds(prev => prev.filter(id => id !== productId))
-          setWishlist(prev => prev.filter(item => item.id !== productId))
-          setWishlistCount(prev => Math.max(0, prev - 1))
-        }
-        return success
+      if (!response.ok) return false
+      const data = await response.json()
+      const success = Boolean(data?.success)
+      if (success) {
+        setWishlistIds(prev => prev.filter(id => id !== productId))
+        setWishlist(prev => prev.filter(item => item.id !== productId))
+        setWishlistCount(prev => Math.max(0, prev - 1))
       }
+      return success
     } catch (error) {
-      // console.error('Error removing from wishlist:', error)
       return false
     } finally {
       setIsLoading(false)
@@ -181,34 +162,25 @@ export function WishlistProvider({ children, initialWishlist = [] }: Omit<Wishli
   }
 
   const clearWishlist = async (): Promise<boolean> => {
+    if (!userId) return false
     setIsLoading(true)
     try {
-      if (userId) {
-        // Authenticated user - call API
-        const response = await fetch('/api/wishlist', {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
+      const response = await fetch('/api/wishlist', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
 
-        if (response.ok) {
-          setWishlistIds([])
-          setWishlist([])
-          return true
-        }
-        return false
-      } else {
-        // Guest user - use localStorage
-        const success = guestWishlist.clear()
-        if (success) {
-          setWishlistIds([])
-          setWishlist([])
-        }
-        return success
+      if (!response.ok) return false
+      const data = await response.json()
+      const success = Boolean(data?.success)
+      if (success) {
+        setWishlistIds([])
+        setWishlist([])
       }
+      return success
     } catch (error) {
-      // console.error('Error clearing wishlist:', error)
       return false
     } finally {
       setIsLoading(false)
