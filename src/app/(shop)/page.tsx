@@ -17,7 +17,7 @@ export default async function HomePage() {
   let displayProducts = featuredProducts
   if (displayProducts.length === 0) {
     const fallback = await getProducts({ page: 1, limit: 20 })
-    displayProducts = fallback.data
+    displayProducts = fallback.data || []
   }
 
 
