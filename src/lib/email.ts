@@ -26,9 +26,9 @@ const transporter = createTransporter()
 const verifyEmailConfig = async () => {
   try {
     await transporter.verify()
-    console.log('✅ Email server connection verified')
+
   } catch (error) {
-    console.error('❌ Email server connection failed:', error)
+
   }
 }
 

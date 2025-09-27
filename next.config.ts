@@ -1,5 +1,10 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from 'next'
+
+const nextConfig: NextConfig = {
+  // Ensure Turbopack uses the correct project root to avoid workspace lockfile confusion
+  turbopack: {
+    root: __dirname,
+  },
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
@@ -68,4 +73,4 @@ const nextConfig = {
   output: 'standalone',
 }
 
-module.exports = nextConfig
+export default nextConfig
