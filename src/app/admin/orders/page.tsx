@@ -136,12 +136,9 @@ export default function AdminOrdersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-orange-100 rounded-lg">
-            <ShoppingCart className="h-6 w-6 text-orange-600" />
-          </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-            <p className="text-gray-600">Manage customer orders and track fulfillment</p>
+            <h1 className="text-3xl font-bold tracking-tight">Order Management</h1>
+            <p className="text-muted-foreground mt-2">Manage customer orders and track fulfillment</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -193,9 +190,7 @@ export default function AdminOrdersPage() {
 
       {/* Orders Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Orders ({pagination.total})</CardTitle>
-        </CardHeader>
+
         <CardContent>
           {loading ? (
             <LoadingSpinner message="Loading orders..." className="py-8" />

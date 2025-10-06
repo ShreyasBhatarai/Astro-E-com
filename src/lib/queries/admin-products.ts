@@ -305,17 +305,33 @@ export async function updateProduct(id: string, data: UpdateProductData): Promis
   }
 }
 
-// Soft delete product
+// Delete product with Cloudinary cleanup
 export async function deleteProduct(id: string): Promise<void> {
   try {
     const product = await prisma.product.findFirst({
-      where: { 
+      where: {
         id,
+      },
+      select: {
+        id: true,
+        images: true
       }
     })
 
     if (!product) {
       throw new Error('Product not found')
+    }
+
+    // Delete images from Cloudinary before deleting product
+    if (product.images && product.images.length > 0) {
+      try {
+        const { deleteImagesFromUrls } = await import('@/lib/cloudinary-server')
+        const deletedCount = await deleteImagesFromUrls(product.images)
+        console.log(`Deleted ${deletedCount} images from Cloudinary for product ${id}`)
+      } catch (cloudinaryError) {
+        // Log error but continue with product deletion
+        console.error('Failed to delete images from Cloudinary:', cloudinaryError)
+      }
     }
 
     await prisma.product.delete({

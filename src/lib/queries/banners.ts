@@ -164,17 +164,38 @@ export async function updateBannerPositions(updates: BannerPositionUpdate[]): Pr
 }
 
 /**
- * Soft delete a banner
+ * Delete a banner with Cloudinary cleanup
  */
 export async function deleteBanner(id: string): Promise<void> {
   try {
-    const result = await prisma.banner.delete({
-      where: { id }
+    // Fetch banner to get image URL before deletion
+    const banner = await prisma.banner.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        image: true
+      }
     })
 
-    if (!result) {
+    if (!banner) {
       throw new Error('Banner not found')
     }
+
+    // Delete image from Cloudinary before deleting banner
+    if (banner.image && banner.image.includes('cloudinary.com')) {
+      try {
+        const { deleteImagesFromUrls } = await import('@/lib/cloudinary-server')
+        const deletedCount = await deleteImagesFromUrls([banner.image])
+        console.log(`Deleted ${deletedCount} image(s) from Cloudinary for banner ${id}`)
+      } catch (cloudinaryError) {
+        // Log error but continue with banner deletion
+        console.error('Failed to delete image from Cloudinary:', cloudinaryError)
+      }
+    }
+
+    await prisma.banner.delete({
+      where: { id }
+    })
   } catch (error) {
     // console.error('Error deleting banner:', error)
     throw new Error('Failed to delete banner')

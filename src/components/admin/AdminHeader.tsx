@@ -21,7 +21,7 @@ interface AdminHeaderProps {
   className?: string
 }
 
-export function AdminHeader({ title = 'Admin Dashboard', className }: AdminHeaderProps) {
+export function AdminHeader({ title = '', className }: AdminHeaderProps) {
   const { data: session } = useSession()
 
   const handleSignOut = async () => {

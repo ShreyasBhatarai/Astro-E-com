@@ -14,9 +14,6 @@ export default async function HomePage() {
     getActiveBanners()
   ])
 
-  if (featuredProducts.length === 0) {
-        return null
-  }
 
 
   return (
