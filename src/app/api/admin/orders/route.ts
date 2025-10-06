@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result as AdminApiResponse)
   } catch (error) {
-    console.error('Error fetching admin orders:', error)
+    // console.error('Error fetching admin orders:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch orders' } as AdminApiResponse,
       { status: 500 }

@@ -186,10 +186,10 @@ export async function deleteBanner(id: string): Promise<void> {
       try {
         const { deleteImagesFromUrls } = await import('@/lib/cloudinary-server')
         const deletedCount = await deleteImagesFromUrls([banner.image])
-        console.log(`Deleted ${deletedCount} image(s) from Cloudinary for banner ${id}`)
+        // console.log(`Deleted ${deletedCount} image(s) from Cloudinary for banner ${id}`)
       } catch (cloudinaryError) {
         // Log error but continue with banner deletion
-        console.error('Failed to delete image from Cloudinary:', cloudinaryError)
+        // console.error('Failed to delete image from Cloudinary:', cloudinaryError)
       }
     }
 

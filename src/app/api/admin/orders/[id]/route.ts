@@ -114,9 +114,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
           orderTotal: Number(updatedOrder.total),
           reason: body?.cancellationReason || body?.failureReason
         })
-        console.log(`✅ Order status email sent to ${updatedOrder.user.email} for order ${updatedOrder.orderNumber}`)
+        // console.log(`✅ Order status email sent to ${updatedOrder.user.email} for order ${updatedOrder.orderNumber}`)
       } catch (emailError) {
-        console.error('❌ Failed to send order status email:', emailError)
+        // console.error('❌ Failed to send order status email:', emailError)
         // Don't fail the request if email fails
       }
     }

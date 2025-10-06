@@ -162,7 +162,7 @@ export default function ProfilePage() {
         await signOut({ callbackUrl: '/login?message=email-updated' })
       }, 1500) // Give time for success message to be seen
     } catch (error) {
-      console.error('OTP verification error:', error)
+      // console.error('OTP verification error:', error)
       toast.error('Failed to verify email. Please try again.')
     } finally {
       setIsVerifyingOtp(false)
@@ -185,7 +185,7 @@ export default function ProfilePage() {
 
       toast.success(result.message || 'New verification code sent!')
     } catch (error) {
-      console.error('Resend OTP error:', error)
+      // console.error('Resend OTP error:', error)
       toast.error('Failed to resend verification code. Please try again.')
     }
   }

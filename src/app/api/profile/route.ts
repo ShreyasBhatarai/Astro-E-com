@@ -143,7 +143,7 @@ export async function PUT(req: Request) {
     })
 
   } catch (error) {
-    console.error('Profile update error:', error)
+    // console.error('Profile update error:', error)
     return NextResponse.json({ 
       error: 'Failed to update profile. Please try again.' 
     }, { status: 500 })

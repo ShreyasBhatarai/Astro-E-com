@@ -103,7 +103,7 @@ export async function sendNotificationEmail(notification: any) {
 
     return success
   } catch (error) {
-    console.error('Error sending notification email:', error)
+    // console.error('Error sending notification email:', error)
     return false
   }
 }

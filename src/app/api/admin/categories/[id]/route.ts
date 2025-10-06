@@ -256,16 +256,16 @@ export async function DELETE(
     }
 
     // Delete image from Cloudinary before deleting category
-    if (existingCategory.image && existingCategory.image.includes('cloudinary.com')) {
-      try {
-        const { deleteImagesFromUrls } = await import('@/lib/cloudinary-server')
-        const deletedCount = await deleteImagesFromUrls([existingCategory.image])
-        console.log(`Deleted ${deletedCount} image(s) from Cloudinary for category ${categoryId}`)
-      } catch (cloudinaryError) {
-        // Log error but continue with category deletion
-        console.error('Failed to delete image from Cloudinary:', cloudinaryError)
-      }
-    }
+    // if (existingCategory.image && existingCategory.image.includes('cloudinary.com')) {
+    //   try {
+    //     // const { deleteImagesFromUrls } = await import('@/lib/cloudinary-server')
+    //     // const deletedCount = await deleteImagesFromUrls([existingCategory.image])
+    //     // console.log(`Deleted ${deletedCount} image(s) from Cloudinary for category ${categoryId}`)
+    //   } catch (cloudinaryError) {
+    //     // Log error but continue with category deletion
+    //    // console.error('Failed to delete image from Cloudinary:', cloudinaryError)
+    //   }
+    // }
 
     // Hard delete the category
     await prisma.category.delete({

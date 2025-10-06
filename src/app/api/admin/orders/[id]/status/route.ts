@@ -120,9 +120,9 @@ export async function PATCH(
           orderTotal: Number(order.total),
           reason: status === 'CANCELLED' ? (cancellationReason || undefined) : (status === 'FAILED' ? (failureReason || undefined) : undefined)
         })
-        console.log(`✅ Order status email sent to ${customerEmail} for order ${order.orderNumber}`)
+        // console.log(`✅ Order status email sent to ${customerEmail} for order ${order.orderNumber}`)
       } catch (emailError) {
-        console.error('❌ Failed to send order status email:', emailError)
+        // console.error('❌ Failed to send order status email:', emailError)
         // Don't fail the whole request if email fails
       }
     }

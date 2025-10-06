@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc'
     }
 
-    console.log('Admin products API filters:', filters)
+    // console.log('Admin products API filters:', filters)
 
     // Disallow "newest first" (createdAt-desc). Coerce to a supported default.
     const safeFilters: AdminProductFilters = (filters.sortBy === 'createdAt' && filters.sortOrder === 'desc')
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result as AdminApiResponse)
   } catch (error) {
-    console.error('Error fetching admin products:', error)
+    // console.error('Error fetching admin products:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch products' } as AdminApiResponse,
       { status: 500 }

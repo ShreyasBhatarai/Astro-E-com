@@ -114,9 +114,9 @@ export async function POST(request: NextRequest) {
           status: 'PENDING',
           orderTotal: Number(order.total)
         })
-        console.log(`✅ Order creation email sent to ${session.user.email} for order ${orderNumber}`)
+        // console.log(`✅ Order creation email sent to ${session.user.email} for order ${orderNumber}`)
       } catch (emailError) {
-        console.error('❌ Failed to send order creation email:', emailError)
+        // console.error('❌ Failed to send order creation email:', emailError)
         // Don't fail the request if email fails
       }
     }
@@ -130,9 +130,9 @@ export async function POST(request: NextRequest) {
         session.user.email || 'No email provided',
         Number(order.total)
       )
-      console.log(`✅ Admin notification sent for order ${orderNumber}`)
+      // console.log(`✅ Admin notification sent for order ${orderNumber}`)
     } catch (adminEmailError) {
-      console.error('❌ Failed to send admin notification:', adminEmailError)
+      // console.error('❌ Failed to send admin notification:', adminEmailError)
       // Don't fail the request if admin email fails
     }
 

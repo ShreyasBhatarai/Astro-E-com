@@ -54,7 +54,7 @@ export async function sendOrderNotificationEmail(
 
     return { success: true }
   } catch (error) {
-    console.error('Error sending email:', error)
+    // console.error('Error sending email:', error)
     return { success: false, error }
   }
 }
@@ -233,13 +233,13 @@ export async function sendOTPEmail(to: string, otp: string, name?: string) {
       html: htmlContent,
     }
 
-    console.log('📧 Attempting to send OTP email to:', to)
+    // console.log('📧 Attempting to send OTP email to:', to)
     const result = await transporter.sendMail(mailOptions)
-    console.log('✅ OTP email sent successfully:', result.messageId)
+    // console.log('✅ OTP email sent successfully:', result.messageId)
 
     return { success: true }
   } catch (error) {
-    console.error('Error sending OTP email:', error)
+    // console.error('Error sending OTP email:', error)
     return { success: false, error }
   }
 }
@@ -265,7 +265,7 @@ export async function sendOrderStatusEmail(data: {
 
     return { success: true }
   } catch (error) {
-    console.error('Error sending order status email:', error)
+    // console.error('Error sending order status email:', error)
     return { success: false, error }
   }
 }
@@ -343,7 +343,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
 
     return { success: true }
   } catch (error) {
-    console.error('Error sending welcome email:', error)
+    // console.error('Error sending welcome email:', error)
     return { success: false, error }
   }
 }
@@ -360,7 +360,7 @@ export async function sendOrderNotificationToAdmin(
     const adminEmail = process.env.ADMIN_DEFAULT_EMAIL
     
     if (!adminEmail) {
-      console.warn('Admin email not configured, skipping admin notification')
+      // console.warn('Admin email not configured, skipping admin notification')
       return { success: false, error: 'Admin email not configured' }
     }
 
@@ -451,10 +451,10 @@ export async function sendOrderNotificationToAdmin(
       html: htmlContent,
     })
 
-    console.log('✅ Admin notification email sent successfully:', result.messageId)
+    // console.log('✅ Admin notification email sent successfully:', result.messageId)
     return { success: true }
   } catch (error) {
-    console.error('❌ Error sending admin notification email:', error)
+    // console.error('❌ Error sending admin notification email:', error)
     return { success: false, error }
   }
 }

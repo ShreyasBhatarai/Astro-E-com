@@ -154,7 +154,7 @@ function NotificationsList({ onCountUpdate, triggerRefresh }: NotificationsListP
         onCountUpdate?.()
       }
     } catch (error) {
-      console.error('Failed to mark all notifications as read:', error)
+      // console.error('Failed to mark all notifications as read:', error)
     } finally {
       setMarkingAllRead(false)
     }
@@ -266,7 +266,7 @@ export function NotificationsSheet() {
         setUnreadCount(data.count || 0)
       }
     } catch (error) {
-      console.error('Error fetching unread count:', error)
+      // console.error('Error fetching unread count:', error)
     }
   }
 

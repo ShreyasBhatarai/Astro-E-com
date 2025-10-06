@@ -114,7 +114,7 @@ export default function AdminProductsPage() {
       setProducts(data.data)
       setPagination(data.pagination)
     } catch (error) {
-      console.error('Error fetching products:', error)
+      // console.error('Error fetching products:', error)
       toast.error('Failed to fetch products')
     } finally {
       setLoading(false)

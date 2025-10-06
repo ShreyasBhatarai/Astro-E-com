@@ -82,7 +82,7 @@ export async function POST(req: Request) {
     })
 
   } catch (error) {
-    console.error('Email verification error:', error)
+    // console.error('Email verification error:', error)
     return NextResponse.json({ 
       error: 'Failed to verify email. Please try again.' 
     }, { status: 500 })
@@ -145,7 +145,7 @@ export async function PATCH(req: Request) {
     })
 
   } catch (error) {
-    console.error('Resend OTP error:', error)
+    // console.error('Resend OTP error:', error)
     return NextResponse.json({ 
       error: 'Failed to resend verification code. Please try again.' 
     }, { status: 500 })

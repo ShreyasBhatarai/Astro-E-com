@@ -153,9 +153,9 @@ export async function getAdminProducts(filters: AdminProductFilters = {}): Promi
       }
     }
   } catch (error) {
-    console.error('Error fetching admin products:', error)
-    console.error('Filters used:', filters)
-    console.error('Where clause:', where)
+    // console.error('Error fetching admin products:', error)
+    // console.error('Filters used:', filters)
+    // console.error('Where clause:', where)
     throw new Error('Failed to fetch products')
   }
 }
@@ -327,10 +327,10 @@ export async function deleteProduct(id: string): Promise<void> {
       try {
         const { deleteImagesFromUrls } = await import('@/lib/cloudinary-server')
         const deletedCount = await deleteImagesFromUrls(product.images)
-        console.log(`Deleted ${deletedCount} images from Cloudinary for product ${id}`)
+        // console.log(`Deleted ${deletedCount} images from Cloudinary for product ${id}`)
       } catch (cloudinaryError) {
         // Log error but continue with product deletion
-        console.error('Failed to delete images from Cloudinary:', cloudinaryError)
+        // console.error('Failed to delete images from Cloudinary:', cloudinaryError)
       }
     }
 

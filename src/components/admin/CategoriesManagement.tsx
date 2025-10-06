@@ -366,7 +366,7 @@ export function CategoriesManagement() {
                               toast.error('Failed to update category status')
                             }
                           } catch (error) {
-                            console.error('Error updating category status:', error)
+                            // console.error('Error updating category status:', error)
                             toast.error('An error occurred while updating category status')
                           }
                         }}

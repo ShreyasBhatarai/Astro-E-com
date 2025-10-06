@@ -31,7 +31,7 @@ export function extractPublicIdFromUrl(url: string): string | null {
     
     return null
   } catch (error) {
-    console.error('Error extracting public ID from URL:', error)
+    // console.error('Error extracting public ID from URL:', error)
     return null
   }
 }
@@ -54,10 +54,10 @@ export async function deleteFromCloudinaryServer(publicId: string): Promise<bool
       return true
     }
     
-    console.error('Cloudinary deletion failed:', result)
+    // console.error('Cloudinary deletion failed:', result)
     return false
   } catch (error) {
-    console.error('Error deleting from Cloudinary:', error)
+    // console.error('Error deleting from Cloudinary:', error)
     return false
   }
 }

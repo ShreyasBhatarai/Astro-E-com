@@ -169,7 +169,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
       ...(tagIds.length ? [{ id: { in: tagIds } }] : [])
     ]
 
-    console.log(`🔍 Search enhanced: "${search}" -> variations: [${uniqueVariations.slice(0, 10).join(', ')}]`)
+    // console.log(`🔍 Search enhanced: "${search}" -> variations: [${uniqueVariations.slice(0, 10).join(', ')}]`)
   }
 
   if (brand) {

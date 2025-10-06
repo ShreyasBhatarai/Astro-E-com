@@ -106,7 +106,7 @@ export function ProductImageGallery({ images, productName, productId, className 
   return (
     <div className={cn('space-y-4', className)}>
       {/* Main Image Swiper */}
-      <div className="relative aspect-square overflow-hidden bg-gray-100 group">
+      <div className="relative aspect-square overflow-hidden ">
         <Swiper
           modules={[Navigation, Pagination, Thumbs]}
           navigation={{
@@ -129,7 +129,7 @@ export function ProductImageGallery({ images, productName, productId, className 
                   src={image || '/placeholder-product.jpg'}
                   alt={`${productName} - Image ${index + 1}`}
                   fill
-                  className="object-cover select-none"
+                  className="object-contain"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
                   draggable={false}
                 />

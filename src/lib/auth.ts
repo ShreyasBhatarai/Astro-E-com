@@ -124,7 +124,7 @@ export const authOptions: NextAuthOptions = {
               token.role = freshUser.role
             }
           } catch (error) {
-            console.error('Error fetching fresh user data for session:', error)
+            // console.error('Error fetching fresh user data for session:', error)
             // Fallback to token data if database fetch fails
             session.user.id = token.id as string
             session.user.role = token.role as UserRole
@@ -150,7 +150,7 @@ export const authOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: 'next-auth.session-token',
+      name: '__Secure-next-auth.session-token',
       options: {
         httpOnly: true,
         sameSite: 'lax',
