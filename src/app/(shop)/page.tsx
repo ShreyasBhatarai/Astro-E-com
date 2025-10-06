@@ -14,10 +14,8 @@ export default async function HomePage() {
     getActiveBanners()
   ])
 
-  let displayProducts = featuredProducts
-  if (displayProducts.length === 0) {
-    const fallback = await getProducts({ page: 1, limit: 20 })
-    displayProducts = fallback.data || []
+  if (featuredProducts.length === 0) {
+        return null
   }
 
 
@@ -90,14 +88,14 @@ export default async function HomePage() {
             </div>
 
             <ProductGrid
-              products={displayProducts}
+              products={featuredProducts}
               variant="homepage"
             />
 
             <div className="text-center mt-8 md:mt-12 lg:mt-16">
               <Button variant="outline" size="lg" asChild className="border-2 border-astro-primary text-astro-primary hover:bg-astro-primary hover:text-white px-6 md:px-8 py-3 md:py-4 text-base md:text-lg rounded-xl font-normal">
-                <Link href="/products?isFeatured=true">
-                  Explore Featured Products
+                <Link href="/products">
+                  Explore All Products
                 </Link>
               </Button>
             </div>
