@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Autoplay } from 'swiper/modules'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -29,7 +29,6 @@ export function BannerCarousel({
   autoPlay = true,
   autoPlayInterval = 5000,
   showControls = true,
-  showDots = true,
   className = ''
 }: BannerCarouselProps) {
   const [swiperInstance, setSwiperInstance] = useState<SwiperType | null>(null)
@@ -42,7 +41,7 @@ export function BannerCarousel({
   if (banners.length === 1) {
     return (
       <div className={`relative w-full ${className}`}>
-        <div className="aspect-[16/6] md:aspect-[21/8] lg:aspect-[21/7] w-full rounded-xl overflow-hidden shadow-2xl">
+        <div className="aspect-[21/10] w-full rounded-xl overflow-hidden">
           <BannerSlide banner={banners[0]} />
         </div>
       </div>
@@ -70,7 +69,7 @@ export function BannerCarousel({
         loop={banners.length > 1}
         speed={700}
         effect="slide"
-        className="w-full rounded-xl shadow-2xl overflow-hidden"
+        className="w-full rounded-xl overflow-hidden"
         style={{
           '--swiper-navigation-color': '#ffffff',
           '--swiper-pagination-color': '#ffffff',
@@ -79,7 +78,7 @@ export function BannerCarousel({
       >
         {banners.map((banner) => (
           <SwiperSlide key={banner.id}>
-            <div className="aspect-[16/8] md:aspect-[21/8] lg:aspect-[21/7] w-full">
+            <div className="aspect-[16/6] md:aspect-[21/8] lg:aspect-[21/10] w-full">
               <BannerSlide banner={banner} />
             </div>
           </SwiperSlide>

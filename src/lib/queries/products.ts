@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { withErrorHandling } from '@/lib/error-handling'
-import { ProductWithDetails, CategoryWithCount, ProductFilters, PaginatedResponse, OptimizedCategory } from '@/types'
+import { ProductWithDetails, ProductFilters, PaginatedResponse, OptimizedCategory } from '@/types'
 
 // Helper function to generate search variations (including pluralization)
 function generateSearchVariations(term: string): string[] {
@@ -368,15 +368,7 @@ export async function getCategories(): Promise<OptimizedCategory[]> {
         name: true,
         slug: true,
         image: true,
-        _count: {
-          select: {
-            products: {
-              where: {
-                isActive: true
-              }
-            }
-          }
-        }
+   
       },
       orderBy: {
         name: 'asc'
@@ -388,9 +380,6 @@ export async function getCategories(): Promise<OptimizedCategory[]> {
       name: category.name,
       slug: category.slug,
       image: category.image,
-      _count: {
-        products: category._count.products
-      }
     }))
   }, 'getCategories')
 }

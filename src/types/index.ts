@@ -30,9 +30,6 @@ export interface OptimizedCategory {
   name: string
   slug: string
   image: string | null
-  _count: {
-    products: number
-  }
 }
 
 export interface OrderWithDetails extends Order {

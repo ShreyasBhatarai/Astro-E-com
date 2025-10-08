@@ -63,17 +63,15 @@ export function CategoryGrid({ categories, className }: CategoryGridProps) {
             className="object-center rounded-lg transition-transform duration-200 group-hover:scale-105"
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 16vw"
           />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200" />
+
         </div>
 
         {/* Info */}
         <div className="text-center">
-          <h3 className="font-light text-xs sm:text-sm md:text-base lg:text-lg text-gray-900 group-hover:text-black transition-colors">
+          <h3 className="font-light text-xs md:text-base lg:text-lg text-gray-900 group-hover:text-black transition-colors">
             {category.name}
           </h3>
-          <p className="font-light text-[10px] sm:text-xs md:text-sm text-gray-500 mt-1">
-            {category._count.products} products
-          </p>
+   
         </div>
       </div>
     </Link>
